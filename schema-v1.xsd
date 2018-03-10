@@ -1,0 +1,52 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">  
+ <xs:element name="document">
+   <xs:complexType> 
+     <xs:sequence>
+       <xs:element name="title" type="xs:string" />
+       <xs:element name="authors">
+         <xs:complexType>
+         	<xs:element name="author" type="xs:string" minOccurs="1" maxOccurs="unbound" />
+          <xs:element name="email" type="xs:string" minOccurs="1" maxOccurs="unbound" />
+         </xs:complexType>
+       </xs:element>
+       <xs:element name="keywords" minOccurs="0" maxOccurs="1"> 
+         <xs:complexType>
+         	<xs:element name="keyword" type="xs:string" minOccurs="1" maxOccurs="unbound" />
+         </xs:complexType>
+       </xs:element>
+       <xs:element name="publishing-date" type="xs:date" />
+       <xs:element name="citations">
+         <xs:complexType>
+           <xs:element name="citation" type="xs:string" minOccurs="1" maxOccurs="unbound" />
+         </xs:complexType>
+       </xs:element>
+       <xs:element name="abstract" type="xs:string" />
+       <xs:element name="type">
+         <xs:simpleType>
+           <xs:restriction base="xs:string">
+             <xs:enumeration value="assignment"/>
+             <xs:enumeration value="thesis"/>          
+           </xs:restriction>
+         </xs:simpleType>
+       </xs:element>
+       <xs:element name="peer-reviewed" type="xs:boolean" /> 
+       <xs:element name="acess"> 
+         <xs:simpleType>
+           <xs:restriction base="xs:string">
+             <xs:enumeration value="openAccess"/>
+             <xs:enumeration value="restrictedAccess"/>
+             <xs:enumeration value="closedAccess"/>             
+           </xs:restriction>
+         </xs:simpleType>
+       </xs:element>
+       <xs:element name="files">
+         <xs:complexType>
+         	<xs:element name="file" type="xs:string" maxOccurs="unbound" /> 
+         </xs:complexType>
+       </xs:element>   
+     </xs:sequence>
+   </xs:complexType>
+ </xs:element>
+</xs:schema>
