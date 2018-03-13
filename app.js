@@ -4,10 +4,14 @@ var favicon = require( 'serve-favicon' );
 var logger = require( 'morgan' );
 var cookieParser = require( 'cookie-parser' );
 var bodyParser = require( 'body-parser' );
+var passport = require( 'passport' );
 // var formidable = require( 'express-formidable' );
 
 var index = require( './routes/index' );
 var users = require( './routes/users' );
+var {
+    Login
+} = require( './services/login' );
 
 var app = express();
 
@@ -24,7 +28,17 @@ app.use( bodyParser.urlencoded( {
 } ) );
 // app.use( formidable() );
 app.use( cookieParser() );
+app.use( require( 'express-session' )( {
+    secret: 'SUPERSECRETREPOSITORIUMKEY',
+    resave: false,
+    saveUninitialized: false
+} ) );
 app.use( express.static( path.join( __dirname, 'public' ) ) );
+
+Login.setup( passport );
+
+app.use( passport.initialize() );
+app.use( passport.session() );
 
 app.use( '/', index );
 app.use( '/users', users );

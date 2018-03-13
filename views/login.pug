@@ -1,0 +1,12 @@
+extends layout
+
+block content
+    form(method="post" action="/login")
+        p
+            label Nome
+            input(type="text" placeholder="Insira o seu nome..." name="username")
+        p
+            label password
+            input(type="text" placeholder="Insira a password..." name="password")
+        p
+            input(type="submit" value="Login")

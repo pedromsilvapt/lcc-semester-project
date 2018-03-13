@@ -7,6 +7,7 @@ var util = require( 'util' );
 var { SubmissionInformationPackage } = require( '../services/sip' );
 var { Compressed } = require( '../services/compressed' );
 var multer = require( 'multer' );
+var passport = require( 'passport' );
 
 var upload = multer( {
     dest: 'uploads/'
@@ -21,7 +22,8 @@ router.get( '/', function ( req, res, next ) {
 
         res.render( 'index', {
             title: 'Express',
-            schema: contents
+            schema: contents,
+            user: req.user
         } );
     } );
 } );
@@ -49,5 +51,15 @@ router.post( '/submit', upload.single( 'file' ), ( req, res, next ) => {
         } );
     } );
 } );
+
+
+router.get( '/login', ( req, res, next ) => {
+    res.render( 'login' );
+} );
+
+router.post( '/login', passport.authenticate( 'local', {
+    successRedirect: '/',
+    failureRedirect: '/login'
+} ) );
 
 module.exports = router;
