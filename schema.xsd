@@ -10,6 +10,7 @@
                             <xs:element name="published-date" type="xs:date"/>
                             <xs:element name="type" type="xs:string"/>
                             <xs:element name="access" type="xs:string"/>
+                            <xs:element name="context" type="xs:string"/>
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
@@ -21,6 +22,8 @@
                                     <xs:sequence>
                                         <xs:element name="name" type="xs:string"/>
                                         <xs:element name="email" type="xs:string"/>
+                                        <xs:element minOccurs="0" name="course" type="xs:string"/>
+                                        <xs:element minOccurs="0" name="id" type="xs:string"/>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>
@@ -48,11 +51,39 @@
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
-                <xs:element name="abstract" type="xs:string"/>
+                <xs:element name="abstract">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="p">
+                                <xs:complexType mixed="true">
+                                    <xs:choice maxOccurs="unbounded" minOccurs="0">
+                                        <xs:element name="b"/>
+                                        <xs:element name="i"/>
+                                        <xs:element name="xref">
+                                            <xs:complexType>
+                                                <xs:attribute name="url" type="xs:string"
+                                                  use="required"/>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:choice>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
                 <xs:element name="files">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element maxOccurs="unbounded" name="file" type="xs:string"/>
+                            <xs:element maxOccurs="unbounded" name="file">
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="xs:string">
+                                            <xs:attribute name="path" type="xs:string"
+                                                use="required"/>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>

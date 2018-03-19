@@ -50,7 +50,7 @@ class Compressed {
           	
             zipFile.on( 'error', err => callback( err ) );
           
-            zipFile.on( 'end', () => callback( null ) );
+            zipFile.once( 'end', () => callback( null ) );
               
             zipFile.readEntry();
         } );    

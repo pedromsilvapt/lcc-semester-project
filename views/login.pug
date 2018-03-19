@@ -1,12 +1,12 @@
 extends layout
 
 block content
-    form(method="post" action="/login")
+    form.w3-center(method="post" action="/login" style="max-width: 300px; margin-right: auto; margin-left: auto")
         p
-            label Nome
-            input(type="text" placeholder="Insira o seu nome..." name="username")
+            label Nome 
+            input.w3-input.w3-border(type="text" placeholder="Insira o seu nome..." name="username")
         p
-            label password
-            input(type="text" placeholder="Insira a password..." name="password")
+            label Password 
+            input.w3-input.w3-border(type="password" placeholder="Insira a password..." name="password")
         p
-            input(type="submit" value="Login")
+            input.w3-button.w3-dark-grey(type="submit" value="Login")
