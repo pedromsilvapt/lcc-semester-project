@@ -1,5 +1,3 @@
-// services/database.js
-
 var mongoose = require( 'mongoose' );
 
 mongoose.connect( 'mongodb://localhost/repositorium' );
@@ -23,22 +21,35 @@ const User = mongoose.model( 'User', new mongoose.Schema( {
     password: String
 } ) );
 
-
-// new User( { username: 'pedro', password: 'password' } ).save( ( err, results ) => {
-//     console.log( err, results );
-// } );
-
-// new Log( { action: 'This is an action', user: { name: 'Ezequiel', _id: null } } ).save( ( err, results ) => {
-//     console.log( err, results );
-// } );
-
-// Log.deleteMany( ( err, results ) => {
-//     console.log( err, results );
-
-//     Log.find( ( err, results ) => {
-//         console.log( err, results );
-//     } );
-// } );
+const Package = mongoose.model( 'Package', new mongoose.Schema( {
+    meta: {
+        title: String,
+        publishedDate: Date,
+        type: String,
+        access: String,
+        context: String
+    },
+    authors: [ {
+        name: String,
+        email: String,
+        course: String,
+        id: String
+    } ],
+    supervisors: [ {
+        name: String,
+        email: String
+    } ],
+    keywords: [ String ],
+    abstract: [ {
+        type: String,
+        attributes: mongoose.Schema.Types.Mixed,
+        body: String
+    } ],
+    files: [ {
+        description: String,
+        path: String
+    } ]
+} ) );
 
 module.exports = {
     Log, User

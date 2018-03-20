@@ -10,6 +10,7 @@ var passport = require( 'passport' );
 var index = require( './routes/index' );
 var users = require( './routes/users' );
 var logs = require( './routes/logs' );
+var packages = require( './routes/packages' );
 var {
     Login
 } = require( './services/login' );
@@ -41,9 +42,16 @@ Login.setup( passport );
 app.use( passport.initialize() );
 app.use( passport.session() );
 
+app.use( ( req, res, next ) => {
+    res.locals.user = req.user;
+    
+    next();
+  } );
+
 app.use( '/', index );
 app.use( '/users', users );
 app.use( '/logs', logs );
+app.use( '/packages', packages );
 
 // catch 404 and forward to error handler
 app.use( function ( req, res, next ) {

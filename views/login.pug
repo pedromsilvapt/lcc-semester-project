@@ -2,6 +2,11 @@ extends layout
 
 block content
     form.w3-center(method="post" action="/login" style="max-width: 300px; margin-right: auto; margin-left: auto")
+        if error
+            div.w3-panel.w3-red
+                h3 Erro
+                p #{error}
+
         p
             label Nome 
             input.w3-input.w3-border(type="text" placeholder="Insira o seu nome..." name="username")
