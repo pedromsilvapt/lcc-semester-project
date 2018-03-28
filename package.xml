@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <meta>
+        <title>Open Access Project Repository</title>
+        <published-date>2018-03-10</published-date>
+        <type></type>
+        <access></access>
+        <context></context>
+    </meta>
+    <authors>
+        <author>
+            <name>Ezequiel Moreira</name>
+            <email></email>
+        </author>
+        <author>
+            <name>Pedro Miguel Oliveira da Silva</name>
+            <email>a77227@alunos.uminho.pt</email>
+            <course>LCC</course>
+            <id>a77227</id>
+        </author>
+    </authors>
+    <supervisors>
+        <supervisor>
+            <name>José Carlos Ramalho</name>
+            <email>jcr@di.uminho.pt</email>
+        </supervisor>
+    </supervisors>
+    <keywords>
+        <keyword>web</keyword>
+        <keyword>nodejs</keyword>
+        <keyword>repository</keyword>
+        <keyword>university</keyword>
+        <keyword>projects</keyword>
+    </keywords>
+    <abstract>
+        <p>A web platform that allows the <b attr="val1" attr2="val2">publication</b> and review of students work <i>projects</i>, making them available to the public.</p>
+        <p>Will allow <b>producers</b> to submit packages, <b>administrators</b> to approve them and <b>consumers</b> to download them.</p>
+    </abstract>
+    <files>
+        <file path="app.js">The main file of the application.</file>
+        <file path="routes/index.js">The home page and login/logout routes.</file>
+        <file path="routes/users.js">The routes managing the users.</file>
+    </files>
+</package>

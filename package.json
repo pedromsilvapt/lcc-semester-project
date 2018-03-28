@@ -20,9 +20,12 @@
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
     "pug": "2.0.0-beta11",
+    "rmdir": "^1.2.0",
     "serve-favicon": "~2.4.5",
+    "uid-safe": "^2.1.5",
     "xml2js": "^0.4.19",
     "xmldoc": "^1.1.0",
-    "yauzl": "^2.9.1"
+    "yauzl": "^2.9.1",
+    "yazl": "^2.4.3"
   }
 }

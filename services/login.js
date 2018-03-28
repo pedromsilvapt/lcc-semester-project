@@ -46,7 +46,6 @@ class Login {
         passport.serializeUser( ( user, done ) => {
             done( null, user.username );
         } );
-
     }
 }
 

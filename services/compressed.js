@@ -3,6 +3,18 @@ var fs = require( 'fs' );
 var path = require( 'path' );
 var mkdirp = require( 'mkdirp' );
 
+function once ( fn ) {
+	let wasCalled = false;
+
+	return ( ...args ) => {
+		if ( !wasCalled ) {
+			wasCalled = true;
+			
+			return fn( ...args );
+		}
+	};
+}
+
 class Compressed {
   	static saveTo ( stream, dest, callback ) {
         const writer = fs.createWriteStream( dest );
@@ -18,19 +30,25 @@ class Compressed {
         if ( entry.fileName.endsWith( '/' ) ) {
         	mkdirp( path.join( dest, entry.fileName ), callback );
       	} else {
-        	mkdirp( path.join( dest, path.dirname( entry.fileName ) ), callback );
-          
-          	zipFile.openReadStream( entry, ( err, stream ) => {
-            	if ( err ) {
-                	return callback( err );
-                }
-              
-              	Compressed.saveTo( stream, path.join( dest, entry.fileName ), callback );
-            } );
+        	mkdirp( path.join( dest, path.dirname( entry.fileName ) ), err => {
+				if ( err ) {
+					return callback( err );
+				}
+
+				zipFile.openReadStream( entry, ( err, stream ) => {
+					if ( err ) {
+						return callback( err );
+					}
+				  
+					Compressed.saveTo( stream, path.join( dest, entry.fileName ), callback );
+				} );
+			} );
         }
     }
   
     static unzip ( zipFile, dest, callback ) {
+		callback = once( callback );
+
         yauzl.open( zipFile, { lazyEntries: true }, ( err, zipFile ) => {
             if ( err ) {
             	return callback( err );

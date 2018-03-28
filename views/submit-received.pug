@@ -1,51 +1,55 @@
 extends layout
 
 block content
-    div Recebido o ficheiro <b>#{file}</b> enviado por <i>#{name}</i>.
-    div !{JSON.stringify( package, null, '----' ).replace( /\n/g, '<br />' )}
-    //- div
-    //-     p
-    //-         b Title 
-    //-         span=package.meta.title
-    //-     p
-    //-         b PubDate 
-    //-         span=package.meta.publishedDate
-    //-     p
-    //-         b Abstract 
-    //-         span=package.abstract
-    //-     p
-    //-         b Authors 
-    //-         each author, index in package.authors
-    //-             span #{author.name}
-    //-             if author.email
-    //-                 span &lt;#{author.email}&gt;
-    //-             if index < package.authors.length - 1
-    //-                 span , 
-    //-         else
-    //-             i No authors
-    //-     p
-    //-         b Supervisors 
-    //-         each supervisor, index in package.supervisors
-    //-             span #{supervisor.name}
-    //-             if supervisor.email
-    //-                 span &lt;#{supervisor.email}&gt;
-    //-             if index < package.supervisors.length - 1
-    //-                 span , 
-    //-         else
-    //-             i No Supervisors
-    //-     p
-    //-         b Keywords 
-    //-         each keyword, index in package.keywords
-    //-             span #{keyword}
-    //-             if index < package.keywords.length - 1
-    //-                 span , 
-    //-         else
-    //-             i No Keywords
-    //-     p
-    //-         b Files 
-    //-         if package.files
-    //-             ul
-    //-             each file, index in package.files
-    //-                 li #{file}
-    //-         else
-    //-             i No Files
+    if errors
+        div Encontrados os seguintes erros
+        each error in errors
+            div #{error}
+    else
+        h2 Package Submitted
+        div
+            p
+                b Title 
+                span=package.meta.title
+            p
+                b PubDate 
+                span=package.meta.publishedDate
+            p
+                b Abstract 
+                span=package.abstract
+            p
+                b Authors 
+                each author, index in package.authors
+                    span #{author.name}
+                    if author.email
+                        span &lt;#{author.email}&gt;
+                    if index < package.authors.length - 1
+                        span , 
+                else
+                    i No authors
+            p
+                b Supervisors 
+                each supervisor, index in package.supervisors
+                    span #{supervisor.name}
+                    if supervisor.email
+                        span &lt;#{supervisor.email}&gt;
+                    if index < package.supervisors.length - 1
+                        span , 
+                else
+                    i No Supervisors
+            p
+                b Keywords 
+                each keyword, index in package.keywords
+                    span #{keyword}
+                    if index < package.keywords.length - 1
+                        span , 
+                else
+                    i No Keywords
+            p
+                b Files 
+                if package.files
+                    ul
+                    each file, index in package.files
+                        li #{file.description} - #{file.path}
+                else
+                    i No Files

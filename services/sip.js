@@ -1,5 +1,8 @@
 const xml2js = require( 'xml2js' );
 const fs = require( 'fs' );
+const path = require( 'path' );
+const xmllint = require( './xmllint' );
+const mkdirp = require( 'mkdirp' );
 
 class SubmissionInformationPackage {
     // static async parseMetadataPromises ( file ) {
@@ -9,6 +12,82 @@ class SubmissionInformationPackage {
 
     //     return parser.parseString( content );
     // }
+
+    static validateMetadata ( file, schema, callback ) {
+        xmllint.validateXML( {
+            xml: file,
+            schema: schema
+        }, ( err, errors ) => {
+            if ( err ) {
+                return callback( err );
+            }
+            
+            callback( null, errors );
+        } );
+    }    
+
+
+  	static validateFiles ( filesList, folder, callback ) {
+    	if ( filesList.length == 0 ) {
+        	return callback( null, [] );
+        }
+        
+      	fs.exists( path.join( folder, filesList[ 0 ].path ), ( exists ) => {
+          	SubmissionInformationPackage.validateFiles( filesList.slice( 1 ), folder, ( err, errors ) => {
+            	if ( err ) {
+                	return callback( err );
+                }
+              
+              	callback( null, exists ? errors : [ 'Ficheiro em falta: ' + filesList[ 0 ].path, ...errors ] );
+            } );
+        } );
+    }
+    
+  	static moveFiles ( filesList, src, dest, callback ) {
+    	if ( filesList.length == 0 ) {
+        	return callback( null );
+        }
+      
+        
+        const file = filesList[ 0 ].path;
+      
+      	mkdirp( path.dirname( path.join( dest, file ) ), ( err ) => {
+        	if ( err ) {
+            	return callback( err );
+            }
+          
+          	fs.copyFile( path.join( src, file ), path.join( dest, file ), ( err ) => {
+            	SubmissionInformationPackage.moveFiles( filesList.slice( 1 ), src, dest, callback );
+            } );
+        } );
+    }
+
+    /**
+     * interface AbstractParagraph {
+     *      body : ( AbstractNode | string )[];
+     * }
+     * 
+     * interface AbstractNode {
+     *      type : "__text__" | "b" | "xref" | "u";
+     *      atributes : object;
+     *      body: ( AbstractNode | string )[]
+     * }
+     */
+    static convertMixedXml ( element ) {
+        if ( element[ '#name' ] == '__text__' ) {
+            return element._;
+        }
+
+        let body = [];
+
+        body = element.$$.map( el => this.convertMixedXml( el ) );
+
+        return {
+            type: element[ '#name' ],
+            attributes: element[ "$" ],
+            body
+        };
+    }
 
     /**
      * 
@@ -39,9 +118,9 @@ class SubmissionInformationPackage {
 
                 // Guardamos uma função anónima na variável person.
                 // Esta função recebe a variável node e retorna um objeto { name : string, email : string }
-                const person = node => ( { name: node.name[ 0 ] || null, email: node.email[ 0 ] || null } );
+                const person = node => ( { name: node.name[ 0 ] ? node.name[ 0 ]._ : null, email: node.email[ 0 ] ? node.email[ 0 ]._ : null } );
 
-                console.log( JSON.stringify( content.package.abstract[ 0 ], null, '\t' ) );
+                const abstract = this.convertMixedXml( content.package.abstract[ 0 ] );
 
                 callback( null, {
                     meta: {
@@ -52,8 +131,8 @@ class SubmissionInformationPackage {
                     },
                     authors: content.package.authors[ 0 ].author.map( person ),
                     supervisors: content.package.supervisors[ 0 ].supervisor.map( person ),
-                    keywords: content.package.keywords[ 0 ].keyword._,
-                    abstract: content.package.abstract[ 0 ]._,
+                    keywords: content.package.keywords[ 0 ].keyword.map( k => k._ ),
+                    abstract: abstract,
                     files: content.package.files[ 0 ].file.map( file => {
                         return {
                             description: file._,
