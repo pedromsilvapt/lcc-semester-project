@@ -22,13 +22,13 @@ const User = mongoose.model( 'User', new mongoose.Schema( {
 } ) );
 
 const Package = mongoose.model( 'Package', new mongoose.Schema( {
-    meta: {
+    meta: new mongoose.Schema( {
         title: String,
         publishedDate: Date,
         type: String,
         access: String,
         context: String
-    },
+    } ),
     authors: [ {
         name: String,
         email: String,
@@ -40,17 +40,20 @@ const Package = mongoose.model( 'Package', new mongoose.Schema( {
         email: String
     } ],
     keywords: [ String ],
-    abstract: [ {
-        type: String,
-        attributes: mongoose.Schema.Types.Mixed,
-        body: String
-    } ],
+    abstract: mongoose.Schema.Types.Mixed,
     files: [ {
         description: String,
         path: String
-    } ]
-} ) );
+    } ],
+    folder: String,
+    approved: { type: Boolean, default: () => false },
+    approvedAt: Date,
+    approvedBy: mongoose.Schema.Types.ObjectId,
+    createdBy: mongoose.Schema.Types.ObjectId,
+    createdAt: { type: Date, default: Date.now }
+} ).index( { name: 'text', 'meta.title': 'text' } ) );
+
 
 module.exports = {
-    Log, User
+    Log, User, Package
 };

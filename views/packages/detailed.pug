@@ -1,0 +1,36 @@
+extends ../layout
+
+block content
+    div.w3-row-padding
+        div.w3-container.w3-col.m8.l9
+            h2 #{package.meta.title}
+
+            div !{abstract}
+
+            div
+                h3 Ficheiros
+                ul.w3-ul.w3-card-2.w3-white
+                    each file in package.files
+                        li
+                            div.w3-bar-item
+                                p.w3-large(style="margin-top: 0px") #{file.path}
+                                span #{file.description}
+
+        div.w3-container.w3-col.m4.l3
+            a.w3-button.w3-green.w3-xlarge.w3-block(href='/packages/' + package._id + '/download') 
+                i.fa.fa-download 
+                | Descarregar
+            div.w3-text-dark-grey
+                h4 Autores
+                each author in package.authors
+                    p #{author.name}
+                else
+                    p
+                        i Sem autores
+
+                h4 Supervisores
+                each supervisor in package.supervisors
+                    p #{supervisor.name}
+                else
+                    p
+                        i Sem supervisores

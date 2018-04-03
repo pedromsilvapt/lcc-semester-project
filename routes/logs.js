@@ -8,7 +8,7 @@ router.get( '/', ( req, res, next ) => {
   
     const currentPage = parseInt( req.query.page || 0 );
     
-    Log.find().skip( currentPage * logsPerPage ).limit( logsPerPage ).exec( ( err, logs ) => {
+    Log.find().sort( { date: 'desc' } ).skip( currentPage * logsPerPage ).limit( logsPerPage ).exec( ( err, logs ) => {
         if ( err ) {
           	return next( err );
         }

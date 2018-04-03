@@ -1,0 +1,73 @@
+extends ../layout
+
+block content
+    div.w3-center.w3-margin
+        a.w3-button.w3-green.w3-xlarge(href="/packages/submit") 
+            i.fa.fa-upload 
+            | Submeter Arquivo
+    
+
+    div.w3-row-padding
+        div.w3-container.w3-col.m4.l3
+            form
+                label.w3-label.w3-large Procurar
+                input.w3-input.w3-border(type="text" name="search" placeholder="Pesquisar..." style="margin-top: 8px; margin-bottom: 16px;" value=searchQuery)
+
+                label.w3-label.w3-large Ordenar
+                select.w3-select(name="sort" style="margin-top: 8px; margin-bottom: 16px;")
+                    option(value="title" selected=searchSort == 'title') Titulo
+                    option(value="createdAt" selected=searchSort == 'createdAt') Data de Criação
+                    option(value="aprovedAt" selected=searchSort == 'aprovedAt') Data de Aprovação
+
+                label.w3-label.w3-large Acesso
+                p(style="margin-top: 0")
+                    input.w3-check(type="checkbox" name="waiting" checked=searchWaiting)
+                    label(style="margin-left: 8px;") Por Aprovar
+                p
+                    input.w3-check(type="checkbox" name="approved" checked=searchApproved)
+                    label(style="margin-left: 8px;") Aprovados
+                if user
+                    p
+                        input.w3-check(type="checkbox" name="mine" checked=searchMine)
+                        label(style="margin-left: 8px;") Apenas Meus
+
+                input.w3-button.w3-grey.w3-right(type="submit" value="Procurar")
+
+        div.w3-container.w3-col.m8.l9
+            ul.w3-ul
+                each pkg in packages
+                    li.w3-bar.w3-card-2.w3-white(style="margin:20px 0")
+                        span.w3-bar-item.w3-button.w3-right
+                            i.fa.fa-download
+                        span.w3-bar-item.w3-text-grey.w3-xxxlarge
+                            if pkg.approved
+                                i.fa.fa-globe 
+                            else
+                                i.fa.fa-lock
+                        div.w3-bar-item
+                            a(href="/packages/" + pkg._id)
+                                span.w3-large #{pkg.meta.title}
+                            p
+                                b Autores 
+                                each author, index in pkg.authors
+                                    if index > 0
+                                        |, 
+                                    span.w3-text-grey #{author.name}
+                            p
+                                b Supervisores 
+                                each supervisor, index in pkg.supervisors
+                                    if index > 0
+                                        |, 
+                                    span.w3-text-grey #{supervisor.name}
+
+    div
+        p
+            if hasPreviousPage
+                a.w3-button.w3-left.w3-orange( href="/packages?page=" + ( currentPage - 1 ) ) Página Anterior
+            else
+                a.w3-button.w3-left.w3-disabled Página Anterior
+            
+            if hasNextPage
+                a.w3-button.w3-right.w3-orange( href="/packages?page=" + ( currentPage + 1 ) ) Página Seguinte
+            else
+                a.w3-button.w3-right.w3-disabled Página Seguinte
