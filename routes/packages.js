@@ -8,6 +8,7 @@ var multer = require( 'multer' );
 var rmdir = require( 'rmdir' );
 var fs = require( 'fs' );
 var uid = require( 'uid-safe' );
+var path = require( 'path' );
 
 var upload = multer( {
     dest: 'uploads/'
@@ -108,7 +109,21 @@ router.get( '/:id', ( req, res, next ) => {
     } );
 } );
 
+router.get( '/:id/download', ( req, res, next ) => {
+    Package.findById( req.params.id, ( err, package ) => {
+        if ( err ) {
+            return next( err );
+        }
 
+        Compressed.zip( path.join( 'storage/packages/', package.folder ), ( err, zip ) => {
+            // TODO Add package.xml
+            
+            zip.end();
+            
+            zip.outputStream.pipe( res );
+        } );
+    } );
+} );
 
 router.get( '/submit', ( req, res, next ) => {
     res.render( 'packages/submit' );
