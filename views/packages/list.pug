@@ -37,8 +37,9 @@ block content
             ul.w3-ul
                 each pkg in packages
                     li.w3-bar.w3-card-2.w3-white(style="margin:20px 0")
-                        span.w3-bar-item.w3-button.w3-right
-                            i.fa.fa-download
+                        a(href="/packages/" + pkg._id + "/download")
+                            span.w3-bar-item.w3-button.w3-right
+                                i.fa.fa-download
                         span.w3-bar-item.w3-text-grey.w3-xxxlarge
                             if pkg.approved
                                 i.fa.fa-globe 

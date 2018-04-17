@@ -9,6 +9,7 @@ var rmdir = require( 'rmdir' );
 var fs = require( 'fs' );
 var uid = require( 'uid-safe' );
 var path = require( 'path' );
+var sanitize = require( 'sanitize-filename' );
 
 var upload = multer( {
     dest: 'uploads/'
@@ -116,11 +117,17 @@ router.get( '/:id/download', ( req, res, next ) => {
         }
 
         Compressed.zip( path.join( 'storage/packages/', package.folder ), ( err, zip ) => {
-            // TODO Add package.xml
-            
-            zip.end();
-            
-            zip.outputStream.pipe( res );
+            zip.addBuffer( new Buffer( SubmissionInformationPackage.buildMetadata( package ) ), 'package.xml' );
+
+            zip.end( size => {
+                if ( size > 0 ) {
+                    res.set( 'Content-Length', size );
+                }
+
+                res.attachment( ( sanitize( package.meta.title ) || 'package' ) + '.zip' );
+    
+                zip.outputStream.pipe( res );
+            } );
         } );
     } );
 } );
