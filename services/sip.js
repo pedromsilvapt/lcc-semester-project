@@ -87,6 +87,13 @@ class SubmissionInformationPackage {
         };
     }
 
+    // readFile ( file, encoding, callback ) {
+    //     this.queue.push( { id: id, callback: callback } );
+
+    //     this.internal.readFile( id, file );
+        
+    // }
+
     /**
      * 
      * @param {string} file O caminho do ficheiro XML que iremos 
@@ -213,6 +220,8 @@ class SubmissionInformationPackage {
 
         var xmlString = builder.buildObject( xmlObject );
         
+        console.log( xmlString )
+
         return xmlString;
     }
 }
