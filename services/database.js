@@ -18,7 +18,9 @@ var Log = mongoose.model( 'Log', new mongoose.Schema( {
 
 const User = mongoose.model( 'User', new mongoose.Schema( {
     username: String,
-    password: String
+    password: String,
+    salt: String,
+    group: String
 } ) );
 
 const Package = mongoose.model( 'Package', new mongoose.Schema( {

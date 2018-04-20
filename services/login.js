@@ -1,6 +1,17 @@
 var passport = require( 'passport' );
 var LocalStrategy = require( 'passport-local' ).Strategy;
 var { User } = require( './database' );
+var sha = require( 'sha.js' );
+
+function allowGroups ( groups ) {
+	return ( req, res, next ) => {
+    	if ( !req.user || groups.indexOf( req.user.group ) == -1 ) {
+        	next( new Error( 'Permission denied.' ) );
+        } else {
+        	next();
+        }
+    };
+}
 
 class Login {
     static setup( passport ) {
@@ -34,7 +45,9 @@ class Login {
                     } );
                 }
 
-                if ( user.password !== password ) {
+                var hash = sha(  'sha256' ).update( user.salt + password ).digest( 'hex' );
+
+                if ( user.password !== hash ) {
                     return callback( null, false, {
                         message: 'Incorrect password.'
                     } );
@@ -50,5 +63,5 @@ class Login {
 }
 
 module.exports = {
-    Login
+    Login, allowGroups
 };
