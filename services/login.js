@@ -13,6 +13,27 @@ function allowGroups ( groups ) {
     };
 }
 
+
+function allowLoggedIn () {
+    return ( req, res, next ) => {
+        if ( !req.user ) {
+            next( new Error( 'Permition denied.' ) );
+        } else {
+            next();
+        }
+    }
+}
+  
+function allowLoggedOut () {
+    return ( req, res, next ) => {
+        if ( req.user ) {
+            next( new Error( 'Permition denied.' ) );
+        } else {
+            next();
+        }
+    }
+}  
+
 class Login {
     static setup( passport ) {
         passport.serializeUser( ( user, done ) => {
@@ -45,6 +66,12 @@ class Login {
                     } );
                 }
 
+                if ( !user.approved ) {
+                    return callback( null, false, {
+                        message: 'Account is not approved yet.'
+                    } );
+                }
+
                 var hash = sha(  'sha256' ).update( user.salt + password ).digest( 'hex' );
 
                 if ( user.password !== hash ) {
@@ -63,5 +90,5 @@ class Login {
 }
 
 module.exports = {
-    Login, allowGroups
+    Login, allowGroups, allowLoggedIn, allowLoggedOut
 };
