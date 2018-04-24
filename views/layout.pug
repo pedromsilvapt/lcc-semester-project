@@ -14,6 +14,9 @@ html
 				b Packages
 			a.w3-bar-item.w3-button.w3-text-grey.w3-hover-grey(href="/logs")
 				b Logs
+			if user && user.group == 'admin'
+				a.w3-bar-item.w3-button.w3-text-grey.w3-hover-grey(href="/users")
+					b Users
 			if user
 				a.w3-bar-item.w3-button.w3-text-grey.w3-hover-red.w3-right(href="/logout")
 					b Logout
@@ -26,12 +29,3 @@ html
 					
 		div.w3-content.w3-padding-16(style="max-width:1100px;")
 			block content
-
-//- body.w3-light-grey
-//- 		div.w3-bar.w3-white.w3-border-bottom.w3-xlarge
-//- 			a.w3-bar-item.w3-button.w3-text-red.w3-hover-red(href="#")
-//- 				b
-//- 					i.fa.fa-map-marker.w3-margin-right
-//- 					| UM Repository
-//- 			a.w3-bar-item.w3-button.w3-right.w3-hover-red.w3-text-grey(href="#")
-//- 				i(class="fa fa-search")

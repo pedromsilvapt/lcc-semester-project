@@ -23,7 +23,7 @@ const User = mongoose.model( 'User', new mongoose.Schema( {
     salt: String,
     group: String,
   	approved: Boolean
-} ) );
+} ).index( { username: 'text', email: 'text' } ) );
 
 const Package = mongoose.model( 'Package', new mongoose.Schema( {
     meta: new mongoose.Schema( {

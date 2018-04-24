@@ -1,0 +1,54 @@
+extends ../layout
+
+block content
+	div.w3-row-padding
+		div.w3-container.w3-col.m4.l3
+			form
+				label.w3-label.w3-large Procurar
+				input.w3-input.w3-border(type="text" name="search" placeholder="Pesquisar..." style="margin-top: 8px; margin-bottom: 16px;" value=searchQuery)
+
+				label.w3-label.w3-large Acesso
+				p(style="margin-top: 0")
+					input.w3-check(type="checkbox" name="waiting" checked=searchWaiting)
+					label(style="margin-left: 8px;") Por Aprovar
+				p
+					input.w3-check(type="checkbox" name="approved" checked=searchApproved)
+					label(style="margin-left: 8px;") Aprovados
+
+				input.w3-button.w3-grey.w3-right(type="submit" value="Procurar")
+
+		div.w3-container.w3-col.m8.l9
+			ul.w3-ul
+				each user in users
+					li.w3-bar.w3-card-2.w3-white(style="margin:20px 0")
+						if !user.approved
+							a(href="/users/" + user.username + "/approve")
+								span.w3-bar-item.w3-button.w3-right
+									i.fa.fa-check
+							a(href="/users/" + user.username + "/remove")
+								span.w3-bar-item.w3-button.w3-right
+									i.fa.fa-minus-circle
+
+						span.w3-bar-item.w3-text-grey.w3-xxxlarge
+							if user.approved
+								i.fa.fa-check
+							else
+								i.fa.fa-lock
+						div.w3-bar-item
+							a(href="/users/" + user.username)
+								span.w3-large #{user.username} (#{user.group})
+							p
+								b Email 
+								| #{user.email} 
+						
+	div
+		p
+			if hasPreviousPage
+				a.w3-button.w3-left.w3-orange( href=previousPageLink ) Página Anterior
+			else
+				a.w3-button.w3-left.w3-disabled Página Anterior
+			
+			if hasNextPage
+				a.w3-button.w3-right.w3-orange( href=nextPageLink ) Página Seguinte
+			else
+				a.w3-button.w3-right.w3-disabled Página Seguinte
