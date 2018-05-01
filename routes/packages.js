@@ -40,6 +40,13 @@ router.get( '/', ( req, res, next ) => {
     const searchWaiting = req.query.waiting == 'on';
     const searchApproved = req.query.approved == 'on';
     const searchSort = req.query.sort || 'title';
+    const searchSortDirection = req.query.sortDirection == 'desc' ? 'desc' : 'asc';
+
+    const allowedSearchSort = [ 'title', 'approvedAt', 'createdAt', 'downloadsCount', 'visitsCount' ];
+
+    if ( !allowedSearchSort.includes( searchSort ) ) {
+        return next( new Error( `Invalid sort option.` ) );
+    }
 
     let query = {};
 
@@ -57,7 +64,7 @@ router.get( '/', ( req, res, next ) => {
         query.createdBy = req.user._id;
     }
 
-    Package.find( query ).sort( { [ searchSort ]: 'asc' } ).skip( currentPage * packagesPerPage ).limit( packagesPerPage ).exec( ( err, packages ) => {
+    Package.find( query ).sort( { [ searchSort ]: searchSortDirection } ).skip( currentPage * packagesPerPage ).limit( packagesPerPage ).exec( ( err, packages ) => {
         if ( err ) {
             return next( err );
         }
@@ -67,7 +74,8 @@ router.get( '/', ( req, res, next ) => {
             currentPage: currentPage,
           	hasNextPage: packages.length == packagesPerPage,
             hasPreviousPage: currentPage > 0,
-            searchQuery, searchSort, searchMine, searchWaiting, searchApproved
+            searchQuery, searchSort, searchSortDirection, searchMine, searchWaiting, searchApproved,
+            format: format
         } );
     } );
 } );
