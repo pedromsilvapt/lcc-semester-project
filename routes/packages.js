@@ -14,6 +14,7 @@ var sanitize = require( 'sanitize-filename' );
 var BagIt = require( 'bagit-fs' );
 var readFolder = require( '../services/readFolder' );
 var mkdirp = require( 'mkdirp' );
+var { format } = require( 'date-fns' );
 
 var upload = multer( {
     dest: 'uploads/'
@@ -189,38 +190,56 @@ router.get( '/:id', ( req, res, next ) => {
             return next( err );
         }
 
+        package.visitsCount = ( package.visitsCount || 0 ) + 1;
+        package.save();
+
         const buildHtml = ( elem ) => {
-            // O nosso caso base tinha dois tipos: string | AbstractNode
             
             if ( typeof elem === 'string' ) {
                 return elem;
             }
-            // agora faltam os atributos
-            // e depois alguns elementos (xref) que não sei como é que o professor os quer traduzir, mas isso
-            // depois temos de lhe perguntar
             
-            // Portanto lembraste que elem.attributes = { attr1: valor1, attr2: valor2, .... }, certo?
-            // E queremos traduzir isso em 'attr1="valor1" attr2="valor2"'
-            // Por isso para cada attributo geramos a string key="value" e juntamos com espaços
-            // certo?
-            //Penso que sim
-            // Object.keys retorna um array com as keys de um objeto
             const attributes = Object.keys( elem.attributes || {} )
                 .map( key => key + '="' + elem.attributes[ key ] + '"' )
                 .join( ' ' );
             
-            // Com as aspas e pelicas fica um pouco confuso, mas percebes mais ou menos o que está ali?
-            //percebo, não é complicado(estamos apenas a colocar as chaves, depois fazemos map para 'chave ='atributos de chave'' e depois juntamos tudo com espaços no meio)
-            // exato. Agora só temos de o inserir na tag
             return '<' + elem.type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + elem.type + '>';
         };
         
         res.render( 'packages/detailed', {
             package: package,
-            // Para cada parágrafo vamos usar uma função recusriva que retorna uma string
-            // E depois juntamos dos os parágrafos com '\n'
-            abstract: package.abstract.body.map( paragraph => buildHtml( paragraph ) ).join( '\n' )
+            abstract: package.abstract.body.map( paragraph => buildHtml( paragraph ) ).join( '\n' ),
+            format: format,
+            canApprove: req.user && req.user.group == 'admin'
         } );
+    } );
+} );
+
+
+// Agora temos de criar o código para permitir aprovar os projetos
+router.get( '/:id/approve', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+	Package.findById( req.params.id, ( err, package ) => {
+      	if ( err ) {
+          	return next( err );
+        }
+      
+    	if ( !package.approved ) {
+        	package.approved = true;
+          	package.approvedAt = new Date();
+          	package.approvedBy = req.user._id;
+          	
+          	package.save( ( err ) => {
+            	if ( err ) {
+                	return next( err );
+                }
+              
+                const backUrl = req.header( 'Referer' ) || ( '/packages/' + package._id );
+
+                res.redirect( backUrl );
+            } );
+        } else {
+            return next( new Error( `The package was already approved.` ) );
+        }
     } );
 } );
 
@@ -229,6 +248,9 @@ router.get( '/:id/download', ( req, res, next ) => {
         if ( err ) {
             return next( err );
         }
+
+        package.downloadsCount = ( package.downloadsCount || 0 ) + 1;
+        package.save();
 
         const random = uid.sync( 20 );
       

@@ -54,7 +54,9 @@ const Package = mongoose.model( 'Package', new mongoose.Schema( {
     approvedAt: Date,
     approvedBy: mongoose.Schema.Types.ObjectId,
     createdBy: mongoose.Schema.Types.ObjectId,
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    downloadsCount: { type: Number, default: 0 },
+    visitsCount: { type: Number, default: 0 }
 } ).index( { name: 'text', 'meta.title': 'text' } ) );
 
 

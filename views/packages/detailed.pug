@@ -3,11 +3,19 @@ extends ../layout
 block content
     div.w3-row-padding
         div.w3-container.w3-col.m8.l9
+            if !package.approved
+                div.w3-panel.w3-amber.w3-text-white.w3-center
+                    h3 Note
+                    p Project waiting for approval
+                    if canApprove
+                        p
+                            a.w3-button.w3-orange.w3-hover-deep-orange( href='/packages/' + package._id + '/approve' ) Approve
+
             h2 #{package.meta.title}
 
             div !{abstract}
 
-            div
+            div.w3-section.w3-padding-small
                 h3 Ficheiros
                 ul.w3-ul.w3-card-2.w3-white
                     each file in package.files
@@ -17,20 +25,28 @@ block content
                                 span #{file.description}
 
         div.w3-container.w3-col.m4.l3
-            a.w3-button.w3-green.w3-xlarge.w3-block(href='/packages/' + package._id + '/download') 
+            a.w3-button.w3-green.w3-xlarge.w3-block.w3-section(href='/packages/' + package._id + '/download') 
                 i.fa.fa-download 
                 | Descarregar
             div.w3-text-dark-grey
-                h4 Autores
-                each author in package.authors
-                    p #{author.name}
-                else
-                    p
-                        i Sem autores
+                div.w3-section.w3-padding-small
+                    p <b>Downloads:</b> #{package.downloadsCount || 0}
+                    p <b>Views:</b> #{package.visitsCount||0}
+                    p <b>Published in</b> #{format( package.createdAt, 'YYYY-MM-DD' )}
 
-                h4 Supervisores
-                each supervisor in package.supervisors
-                    p #{supervisor.name}
-                else
-                    p
-                        i Sem supervisores
+                div.w3-section.w3-padding-small
+                    h4 Autores
+                    each author in package.authors
+                        p #{author.name}
+                    else
+                        p
+                            i Sem autores
+
+                div.w3-section.w3-padding-small
+                    h4 Supervisores
+                    each supervisor in package.supervisors
+                        p #{supervisor.name}
+                    else
+                        p
+                            i Sem supervisores
+
