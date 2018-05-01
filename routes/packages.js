@@ -11,6 +11,9 @@ var fs = require( 'fs' );
 var uid = require( 'uid-safe' );
 var path = require( 'path' );
 var sanitize = require( 'sanitize-filename' );
+var BagIt = require( 'bagit-fs' );
+var readFolder = require( '../services/readFolder' );
+var mkdirp = require( 'mkdirp' );
 
 var upload = multer( {
     dest: 'uploads/'
@@ -27,8 +30,7 @@ function cleanup( ...folders ) {
 }
 
 router.get( '/', ( req, res, next ) => {
-    
-    const packagesPerPage = 2;
+    const packagesPerPage = 5;
   
     const currentPage = parseInt( req.query.page || 0 );
     
@@ -86,7 +88,7 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
             return next( err );
         }
 
-        SubmissionInformationPackage.validateMetadata( uploadFolder + '/package.xml', 'schema.xsd', ( err, errors ) => {
+        SubmissionInformationPackage.validateMetadata( uploadFolder + '/data/package.xml', 'schema.xsd', ( err, errors ) => {
             if ( err ) {
                 cleanup( req.file.path, uploadFolder );
 
@@ -101,59 +103,77 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
                 } );
             }
 
-            SubmissionInformationPackage.parseMetadata( uploadFolder + '/package.xml', ( err, package ) => {
+            SubmissionInformationPackage.parseMetadata( uploadFolder + '/data/package.xml', ( err, package ) => {
                 if ( err ) {
                     cleanup( req.file.path, uploadFolder );
 
                     return next( err );
                 }
                 
-                SubmissionInformationPackage.validateFiles( package.files, uploadFolder, ( err, missingFiles ) => {
-                    if ( err ) {
-                        cleanup( req.file.path, uploadFolder );
+                var bag = BagIt( uploadFolder );
+              
+              	bag.readManifest( ( err, entries ) => {
+                	if ( err ) {
+                    	cleanup( req.file.path, uploadFolder );
 
                         return next( err );
                     }
-
-                    if ( missingFiles.length ) {
-                        cleanup( req.file.path, uploadFolder );
-
-                        return res.render( 'submit-received', {
-                            errors: missingFiles
-                        } );
+                  
+                  	const checksums = {};
+                  
+                    for ( let entry of entries ) {
+                        if ( entry.name && entry.name.startsWith( 'data/' ) ) {
+                            checksums[ entry.name.slice( 'data/'.length ) ] = entry.checksum;
+                        }
                     }
-
-                    SubmissionInformationPackage.moveFiles( package.files, uploadFolder, storageFolder, ( err ) => {
+                      
+                    SubmissionInformationPackage.validateFiles( checksums, package.files, uploadFolder + '/data', ( err, missingFiles ) => {
                         if ( err ) {
-                            cleanup( req.file.path, uploadFolder, storageFolder );
+                            cleanup( req.file.path, uploadFolder );
 
                             return next( err );
                         }
 
-                        
-                      	new Package( {
-                          	// Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
-                        	...package,
-                          	folder: id,
-                          	approved: false,
-                          	approvedBy: null,
-                          	approvedAt: null,
-                          	createdBy: req.user.id
-                        } ).save( ( err, result ) => {
-                        	if ( err ) {
-                            	cleanup( req.file.path, uploadFolder, storageFolder );
-                              
-                              	return next( err );
-                            }
-                          
-                        	Logger.write( 'Package submitted: ' + package.meta.title, req.user );
+                        if ( missingFiles.length ) {
+                            cleanup( req.file.path, uploadFolder );
 
-                        	cleanup( req.file.path, uploadFolder );
-                          
-                            res.render( 'submit-received', {
-                                name: req.body.name,
-                                file: req.file.originalname,
-                                package: package
+                            return res.render( 'submit-received', {
+                                errors: missingFiles
+                            } );
+                        }
+
+                        SubmissionInformationPackage.moveFiles( package.files, uploadFolder + '/data', storageFolder, ( err ) => {
+                            if ( err ) {
+                                cleanup( req.file.path, uploadFolder, storageFolder );
+
+                                return next( err );
+                            }
+
+                            
+                            new Package( {
+                                // Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
+                                ...package,
+                                folder: id,
+                                approved: false,
+                                approvedBy: null,
+                                approvedAt: null,
+                                createdBy: req.user.id
+                            } ).save( ( err, result ) => {
+                                if ( err ) {
+                                    cleanup( req.file.path, uploadFolder, storageFolder );
+                                
+                                    return next( err );
+                                }
+                            
+                                Logger.write( 'Package submitted: ' + package.meta.title, req.user );
+
+                                cleanup( req.file.path, uploadFolder );
+                            
+                                res.render( 'submit-received', {
+                                    name: req.body.name,
+                                    file: req.file.originalname,
+                                    package: package
+                                } );
                             } );
                         } );
                     } );
@@ -210,17 +230,61 @@ router.get( '/:id/download', ( req, res, next ) => {
             return next( err );
         }
 
-        Compressed.zip( path.join( 'storage/packages/', package.folder ), ( err, zip ) => {
-            zip.addBuffer( new Buffer( SubmissionInformationPackage.buildMetadata( package ) ), 'package.xml' );
+        const random = uid.sync( 20 );
+      
+        const storageFolder = 'storage/bags/' + random;
+        const packageFolder = path.join( 'storage/packages/', package.folder );
+  
+        const bag = BagIt( storageFolder );
+            
+        const addFileToBagit = ( files, index, callback ) => {
+            if ( index >= files.length ) {
+                return callback( null );
+            }
 
-            zip.end( size => {
-                if ( size > 0 ) {
-                    res.set( 'Content-Length', size );
+            mkdirp( path.dirname( path.join( storageFolder, 'data', files[ index ] ) ), ( err ) => {
+                if ( err ) {
+                    return callback( err );
                 }
+                
+                const writer = fs.createReadStream( path.join( packageFolder, files[ index ] ) )
+                    .pipe( bag.createWriteStream( files[ index ] ) );
+  
+                  writer.on( 'error', ( err ) => callback( err ) );
+  
+                  writer.on( 'finish', () => addFileToBagit( files, index + 1, callback ) );
+            } );
+        };
+        
+        readFolder( packageFolder, ( err, files ) => {
+            if ( err ) {
+                return next( err );
+            }
+            
+            addFileToBagit( files, 0, err => {
+                if ( err ) {
+                    return next( err );
+                }
+  
+                bag.finalize( err => {
+                    if ( err ) {
+                        return next( err );
+                    }
+  
+                    Compressed.zip( storageFolder, ( err, zip ) => {
+                        zip.addBuffer( new Buffer( SubmissionInformationPackage.buildMetadata( package ) ), 'data/package.xml' );
 
-                res.attachment( ( sanitize( package.meta.title ) || 'package' ) + '.zip' );
-    
-                zip.outputStream.pipe( res );
+                        zip.end( size => {
+                            if ( size > 0 ) {
+                                res.set( 'Content-Length', size );
+                            }
+
+                            res.attachment( ( sanitize( package.meta.title ) || 'package' ) + '.zip' );
+                
+                            zip.outputStream.pipe( res );
+                        } );
+                    } );
+                } );
             } );
         } );
     } );
