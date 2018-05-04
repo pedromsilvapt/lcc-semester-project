@@ -1,10 +1,49 @@
 extends layout
+include packages/package-card
+
+block head
+	script.
+		const allTabs = [ 'recent', 'views', 'downloads' ]
+
+		function hideTab ( tab ) {
+			$( '#tab-btn-' + tab ).removeClass( 'w3-green' );
+			$( '#tab-body-' + tab ).addClass( 'w3-hide' );
+		}
+
+		function showTab ( tab ) {
+			$( '#tab-btn-' + tab ).addClass( 'w3-green' );
+			$( '#tab-body-' + tab ).removeClass( 'w3-hide' );
+		}
+
+		function selectTab ( tab ) {
+			for ( let otherTab of allTabs ) {
+				hideTab( otherTab );
+			}
+
+			showTab( tab );
+		}
+
+		function setupEventHandlers () {
+			for ( let tab of allTabs ) {
+				$( '#tab-btn-' + tab ).on( 'click', () => selectTab( tab ) );
+			}
+		}
+
+		$( () => {
+			setupEventHandlers();	
+		} );
 
 block content
-  h1= title
-  if user
-    p Welcome to #{title}, #{user.username}
-  else
-    p Welcome to #{title}
-  
-  pre= schema
+	div.w3-center
+		li.w3-bar
+		each tab in packageTabs
+			span.w3-bar-item.w3-button( href="#" id="tab-btn-" + tab.name class=tab.selected ? 'w3-green' : '' ) #{tab.title}
+
+	div.w3-body.w3-margin
+		each tab in packageTabs
+			div.w3-container.w3-col.m10.l12( id="tab-body-" + tab.name class=tab.selected ? '' : 'w3-hide' )
+				ul.w3-ul
+				each pkg in tab.packages
+					+package-card( pkg )
+				else
+					p.w3-center.w3-text-grey.w3-xlarge No packages found

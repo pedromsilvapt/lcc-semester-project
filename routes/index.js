@@ -7,19 +7,43 @@ var { UsersManager } = require( '../services/users' );
 var { Logger } = require( '../services/logger' );
 var passport = require( 'passport' );
 var { allowLoggedIn, allowLoggedOut } = require( '../services/login' );
+var { Package } = require( '../services/database' );
 var Joi = require( 'joi' );
 
+function loadPackages ( field, order, callback ) {
+    Package.find( { approved: true } ).sort( { [ field ]: order } ).limit( 5 ).exec( callback );
+}
 
 /* GET home page. */
 router.get( '/', function ( req, res, next ) {
-    fs.readFile( path.join( __dirname, '..', 'schema.xsd' ), 'utf8', ( err, contents ) => {
-        if ( err ) {
-            return next( err );
-        }
+    loadPackages( 'downloadsCount', 'desc', ( err, packagesDownloads ) => {
+        if ( err ) return next( err );
 
-        res.render( 'index', {
-            title: 'Express',
-            schema: contents
+        loadPackages( 'viewsCount', 'desc', ( err, packagesViews ) => {
+            if ( err ) return next( err );
+
+            loadPackages( 'createdAt', 'desc', ( err, packagesRecent ) => {
+                if ( err ) return next( err );
+
+                res.render( 'index', {
+                    title: 'Express',
+                    packageTabs: [ {
+                        title: 'Most Recent',
+                        name: 'recent',
+                        packages: packagesRecent,
+                        selected: true
+                    }, {
+                        title: 'Most Viewed',
+                        name: 'views',
+                        packages: packagesViews
+                    }, {
+                        title: 'Most Downloaded',
+                        name: 'downloads',
+                        packages: packagesDownloads,
+                    } ],
+                    format: () => ''
+                } );
+            } );
         } );
     } );
 } );
@@ -50,19 +74,6 @@ router.get( '/register', allowLoggedOut(), ( req, res, next ) => {
 
 
 router.post( '/register', allowLoggedOut(), ( req, res, next ) => {
-	// Portanto: temos de verificar
-  	// 1 - se o utilizador e email não existem já na base de dados
-  	// 2 - se o email é válido (tem o formato válido)
-  	// 3 - se as passwords coincidem
-  	// Se tudo for válido, inserimos
-  	// Se não mostramos com as mensagens de erro 
-    //penso que sim
-  	// Procuramos por utilizadores que tenham aquele username ou aquele email
-  
-  	// Como podem haver vários "erros" no formulário, podemos ir guardando num array:
-  	// - Se no fim esse array estiver vazio (não houver errors) inserimos
-  	// - se o length > 0 então mostramos novamente a página com o array dos erros
-    //ok, parece bem
   	const errors = [];
   
     
@@ -94,10 +105,6 @@ router.post( '/register', allowLoggedOut(), ( req, res, next ) => {
                 ...req.body
             } );
         } else {
-            // Certo?
-          // portanto, se não tiver erros, ele cria o utilizador com os parâmetros apropriados, e depois renderiza no ecrã a mensagem de sucesso.
-          //é mais ou menos isso?
-            // sim. Agora temos de ir ao template e passar a usar isso
             UsersManager.create( req.body.username, req.body.password, req.body.email, 'consumer', false, ( err ) => {
                 if ( err ) {
                     return next( err );
