@@ -1,7 +1,19 @@
 body {
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+	font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
-  text-decoration: none;
+	text-decoration: none;
+}
+
+.w3-flex {
+	display: flex;
+}
+
+.w3-flex-grow {
+	flex: 1 1 auto;
+}
+
+.w3-flex-fixed {
+	flex: 0 0 auto;
 }

@@ -35,6 +35,12 @@ block head
 
 block content
 	div.w3-center
+		form.w3-flex(action="/packages" style="width: 70%; margin-left: auto; margin-right: auto;")
+			//- label.w3-label.w3-large Search
+			input.w3-flex-grow.w3-input.w3-border(type="text" name="search" placeholder="Search..." style="margin: 0 20px")
+			input.w3-flex-fixed.w3-button.w3-dark-grey( type="submit" value="Search" )
+
+	div.w3-center
 		ul
 		each tab in packageTabs
 			li.w3-bar
