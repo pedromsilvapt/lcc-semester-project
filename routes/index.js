@@ -11,7 +11,7 @@ var { Package } = require( '../services/database' );
 var Joi = require( 'joi' );
 
 function loadPackages ( field, order, callback ) {
-    Package.find( { approved: true } ).sort( { [ field ]: order } ).limit( 5 ).exec( callback );
+    Package.find( { approved: true, state: 'public' } ).sort( { [ field ]: order } ).limit( 5 ).exec( callback );
 }
 
 /* GET home page. */

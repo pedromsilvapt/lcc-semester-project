@@ -50,6 +50,7 @@ const Package = mongoose.model( 'Package', new mongoose.Schema( {
         path: String
     } ],
     folder: String,
+    state: { type: String, enum: [ 'public', 'private', 'deleted' ], default: 'public' },
     approved: { type: Boolean, default: () => false },
     approvedAt: Date,
     approvedBy: mongoose.Schema.Types.ObjectId,

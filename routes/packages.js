@@ -30,6 +30,28 @@ function cleanup( ...folders ) {
     }
 }
 
+function createRestrictionQuery ( user ) {
+    if ( !user || user.group === 'consumer' ) {
+        return { approved: true, state: 'public' };
+    }
+
+    if ( user.group === 'admin' ) {
+        //No restrictions
+        return {};
+    }
+
+    if ( user.group === 'producer' ) {
+        return {
+            $or: [ 
+                // can view all public and approved packages
+                { approved: true, state: 'public' },
+                { approved: false, createdBy: user._id },
+                { state: 'private', createdBy: user._id }
+            ]
+        };
+    }
+}
+
 router.get( '/', ( req, res, next ) => {
     const packagesPerPage = 5;
   
@@ -64,7 +86,9 @@ router.get( '/', ( req, res, next ) => {
         query.createdBy = req.user._id;
     }
 
-    Package.find( query ).sort( { [ searchSort ]: searchSortDirection } ).skip( currentPage * packagesPerPage ).limit( packagesPerPage ).exec( ( err, packages ) => {
+    const userCanSee = createRestrictionQuery( req.user );
+
+    Package.find( { $and: [ query, userCanSee ] } ).sort( { [ searchSort ]: searchSortDirection } ).skip( currentPage * packagesPerPage ).limit( packagesPerPage ).exec( ( err, packages ) => {
         if ( err ) {
             return next( err );
         }
@@ -207,7 +231,9 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
 } );
 
 router.get( '/:id', ( req, res, next ) => {
-    Package.findOne( { index: req.params.id }, ( err, package ) => {
+    const userCanSee = createRestrictionQuery( req.user );
+  
+	Package.findOne( { $and: [ { index: req.params.id }, userCanSee ] }, ( err, package ) => {
         if ( err ) {
             return next( err );
         }
