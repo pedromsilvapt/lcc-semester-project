@@ -3,7 +3,7 @@ var router = express.Router();
 var { SubmissionInformationPackage } = require( '../services/sip' );
 var { Compressed } = require( '../services/compressed' );
 var { Logger } = require( '../services/logger' );
-var { Package } = require( '../services/database' );
+var { Package, Settings } = require( '../services/database' );
 var { allowGroups } = require( '../services/login' );
 var multer = require( 'multer' );
 var rmdir = require( 'rmdir' );
@@ -158,30 +158,44 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
                                 return next( err );
                             }
 
-                            
-                            new Package( {
-                                // Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
-                                ...package,
-                                folder: id,
-                                approved: false,
-                                approvedBy: null,
-                                approvedAt: null,
-                                createdBy: req.user.id
-                            } ).save( ( err, result ) => {
+                            Settings.findOne( { key: 'packagesIndex' }, ( err, setting ) => {
                                 if ( err ) {
                                     cleanup( req.file.path, uploadFolder, storageFolder );
-                                
+
                                     return next( err );
                                 }
-                            
-                                Logger.write( 'Package submitted: ' + package.meta.title, req.user );
 
-                                cleanup( req.file.path, uploadFolder );
-                            
-                                res.render( 'submit-received', {
-                                    name: req.body.name,
-                                    file: req.file.originalname,
-                                    package: package
+                                if ( !setting ) {
+                                    setting = new Settings( { key: 'packagesIndex', value: 0 } );
+                                }
+
+                                new Package( {
+                                    // Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
+                                    ...package,
+                                    folder: id,
+                                    approved: false,
+                                    approvedBy: null,
+                                    approvedAt: null,
+                                    createdBy: req.user.id,
+                                    index: setting.value++
+                                } ).save( ( err, result ) => {
+                                    if ( err ) {
+                                        cleanup( req.file.path, uploadFolder, storageFolder );
+                                    
+                                        return next( err );
+                                    }
+                                
+                                    Logger.write( 'Package submitted: ' + package.meta.title, req.user );
+    
+                                    cleanup( req.file.path, uploadFolder );
+                                
+                                    setting.save();
+
+                                    res.render( 'submit-received', {
+                                        name: req.body.name,
+                                        file: req.file.originalname,
+                                        package: package
+                                    } );
                                 } );
                             } );
                         } );
@@ -193,9 +207,13 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
 } );
 
 router.get( '/:id', ( req, res, next ) => {
-    Package.findById(req.params.id, ( err, package ) => {
+    Package.findOne( { index: req.params.id }, ( err, package ) => {
         if ( err ) {
             return next( err );
+        }
+
+        if ( !package ) {
+            return next( new Error( `No package with code ${ req.params.id } was found.` ) );
         }
 
         package.visitsCount = ( package.visitsCount || 0 ) + 1;

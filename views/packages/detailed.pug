@@ -11,7 +11,7 @@ block content
                         p
                             a.w3-button.w3-orange.w3-hover-deep-orange( href='/packages/' + package._id + '/approve' ) Approve
 
-            h2 #{package.meta.title}
+            h2 <span class="w3-text-grey">##{package.index}</span> #{package.meta.title}
 
             div !{abstract}
 
