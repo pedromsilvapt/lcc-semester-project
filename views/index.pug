@@ -35,15 +35,17 @@ block head
 
 block content
 	div.w3-center
-		li.w3-bar
+		ul
 		each tab in packageTabs
-			span.w3-bar-item.w3-button( href="#" id="tab-btn-" + tab.name class=tab.selected ? 'w3-green' : '' ) #{tab.title}
+			li.w3-bar
+				span.w3-bar-item.w3-button( href="#" id="tab-btn-" + tab.name class=tab.selected ? 'w3-green' : '' ) #{tab.title}
 
-	div.w3-body.w3-margin
+	div.w3-row.w3-margin
 		each tab in packageTabs
 			div.w3-container.w3-col.m10.l12( id="tab-body-" + tab.name class=tab.selected ? '' : 'w3-hide' )
 				ul.w3-ul
-				each pkg in tab.packages
-					+package-card( pkg )
-				else
-					p.w3-center.w3-text-grey.w3-xlarge No packages found
+					each pkg in tab.packages
+						+package-card( pkg )
+					else
+						li
+							p.w3-center.w3-text-grey.w3-xlarge No packages found
