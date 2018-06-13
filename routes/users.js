@@ -3,10 +3,10 @@ var router = express.Router();
 var { allowGroups } = require( '../services/login.js' );
 var { User } = require( '../services/database.js' );
 var qs = require( 'querystring' );
+var { UsersManager } = require( '../services/users' );
+var Joi = require( 'joi' );
 
 router.get( '/', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
-	console.log( req.header( 'Referer' ) );
-
 	const usersPerPage = 5;
 	
 	const currentPage = +( req.query.page || 0 );
@@ -42,6 +42,131 @@ router.get( '/', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
 
 			searchQuery, searchApproved, searchWaiting
 		} );
+	} );
+} );
+
+router.get( '/create', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+	res.render( 'users/edit', { userData: {} } );
+} );
+
+router.post( '/create', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+  	const errors = [];
+  
+  	User.find( { $or: [ { username: req.body.username }, { email: req.body.email } ] }, ( err, users ) => {
+    	if ( users.find( user => user.username == req.body.username ) ) {
+            errors.push( 'Username already exists' );
+        }
+
+        if ( users.find( user => user.email == req.body.email ) ) {  	
+            errors.push( 'Email already exists' );
+        }
+        
+      	const schema = Joi.object().keys( {
+        	username: Joi.string().alphanum().min( 6 ).max( 16 ).required(),
+          	password: Joi.string().min( 6 ).max( 20 ).required(),
+          	password_confirm: Joi.any().equal( Joi.ref( 'password' ) ).required(),
+          	email: Joi.string().email().required(),
+          	group: Joi.string().valid( 'admin', 'producer', 'consumer' ).required(),
+        } );
+      
+      	var validation = Joi.validate( req.body, schema, { abortEarly: false } );
+          
+        if ( validation.error ) {
+            errors.push( ...validation.error.details.map( err => err.message ) );
+        }
+        
+        if ( errors.length > 0 ) {
+            res.render( 'users/edit', {
+                errors,
+                userData: req.body
+            } );
+        } else {
+            UsersManager.create( req.body.username, req.body.password, req.body.email, req.body.group, true, ( err, user ) => {
+                if ( err ) {
+                    return next( err );
+				}
+				
+                res.redirect( '/users/' + user.username );
+            } );
+        }
+    } );
+} );
+
+router.get( '/:name/edit', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+	User.findOne( { username: req.params.name }, ( err, user ) => {
+		if ( err ) {
+			return next( err );
+		}
+		
+		if ( user == null ) {
+        	return next( new Error( 'User not found.' ) );
+        }
+
+		res.render( 'users/edit', { userData: user } );
+	} );
+} );
+
+
+router.post( '/:name/edit', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+	User.findOne( { username: req.params.name }, ( err, user ) => {
+	  	if ( err ) {
+			return next( err );
+		}
+  
+	  	if ( user == null ) {
+			return next( new Error( 'User not found.' ) );
+	  	}
+	  
+	  	const errors = [];
+	
+		User.find( { $or: [ { username: req.body.username }, { email: req.body.email } ] }, ( err, users ) => {
+			if ( users.find( u => !u._id.equals( user._id ) && u.username == req.body.username ) ) {
+				errors.push( 'Username already exists' );
+		  	}
+  
+		  	if ( users.find( u => !u._id.equals( user._id ) && u.email == req.body.email ) ) {
+				errors.push( 'Email already exists' );
+		  	}
+		  
+			const schema = Joi.object().keys( {
+				username: Joi.string().alphanum().min( 6 ).max( 16 ).required(),
+				password: Joi.string().min( 6 ).max( 20 ).allow( '' ),
+				password_confirm: Joi.any().equal( Joi.ref( 'password' ) ),
+				email: Joi.string().email().required(),
+				group: Joi.string().valid( 'admin', 'producer', 'consumer' )
+		  	} ).with( 'password', 'password_confirm' );
+		
+			var validation = Joi.validate( req.body, schema, { abortEarly: false } );
+			
+		  	if ( validation.error ) {
+				errors.push( ...validation.error.details.map( err => err.message ) );
+		  	}
+		  
+		  	if ( errors.length > 0 ) {
+				res.render( 'users/edit', {
+					errors,
+					userData: {
+						...user.toObject(),
+						...req.body
+					}
+				} );
+		  	} else {
+				const updated = { ...req.body };
+				  
+				if ( !req.body.password ) delete updated.password;
+				
+				if ( req.body.approved == 'on' ) updated.approved = true;
+				else delete updated.approved;
+
+				UsersManager.update( req.params.name, updated, ( err, user ) => {
+					if ( err ) {
+						return next( err );
+				  	}
+					  
+					res.redirect( '/users/' + updated.username );
+			  	} );
+		  	}
+	  	} );
 	} );
 } );
 

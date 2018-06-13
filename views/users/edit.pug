@@ -1,0 +1,49 @@
+extends ../layout
+
+block content
+	if userData._id
+		- var url = "/users/" + userData.username + "/edit"
+	else
+		- var url = "/users/create"
+
+	form.w3-center(method="post" style="max-width: 400px; margin-right: auto; margin-left: auto")
+		if errors
+			each error in errors
+				div.w3-panel.w3-red
+					p #{error}
+
+		if success
+			div.w3-panel.w3-green
+				h3 Success
+				p Your account was successfully created. Wait for an administrator to approve it.
+		else
+			p                
+				label Nome 
+				input.w3-input.w3-border(type="text" placeholder="Insira o nome..." name="username" value=userData.username autofocus)
+			p
+				label Password 
+				input.w3-input.w3-border(type="password" placeholder="Insira a password..." name="password")
+			p
+				label Confirmar Password 
+				input.w3-input.w3-border(type="password" placeholder="Insira novamente a password..." name="password_confirm")
+			p
+				label Email 
+				input.w3-input.w3-border(type="text" placeholder="Insira o email..." name="email" value=userData.email)
+
+			p
+				label Grupo
+				select.w3-select(name="group")
+					option(value="admin" selected=userData.group == "admin") Administrator
+					option(value="producer" selected=userData.group == "producer") Producer
+					option(value="consumer" selected=!userData.group || userData.group == "consumer") Consumer
+			
+			if userData._id && !userData.approved
+				p
+					input.w3-check(type="checkbox" name="approved")
+					label Approved
+			
+			p
+				if userData._id 
+					input.w3-button.w3-light-blue(type="submit" value="Update")
+				else
+					input.w3-button.w3-dark-grey(type="submit" value="Create")

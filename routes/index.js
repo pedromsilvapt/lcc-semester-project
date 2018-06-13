@@ -76,7 +76,6 @@ router.get( '/register', allowLoggedOut(), ( req, res, next ) => {
 router.post( '/register', allowLoggedOut(), ( req, res, next ) => {
   	const errors = [];
   
-    
   	User.find( { $or: [ { username: req.body.username }, { email: req.body.email } ] }, ( err, users ) => {
     	if ( users.find( user => user.username == req.body.username ) ) {
             errors.push( 'Username already exists' );
