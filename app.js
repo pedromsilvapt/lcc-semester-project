@@ -11,9 +11,8 @@ var index = require( './routes/index' );
 var users = require( './routes/users' );
 var logs = require( './routes/logs' );
 var packages = require( './routes/packages' );
-var {
-    Login
-} = require( './services/login' );
+var { Login } = require( './services/login' );
+var { format } = require( 'date-fns' );
 
 var app = express();
 
@@ -44,6 +43,7 @@ app.use( passport.session() );
 
 app.use( ( req, res, next ) => {
     res.locals.user = req.user;
+    res.locals.format = format;
     
     next();
   } );
@@ -72,18 +72,3 @@ app.use( function ( err, req, res, next ) {
 } );
 
 module.exports = app;
-
-// var yazl = require( "yazl" );
-// var fs = require( "fs" );
-
-// var zipfile = new yazl.ZipFile();
-// zipfile.addFile( "package.xml", "package.xml" );
-// // (add only files, not directories)
-// zipfile.addFile( "app.js", "app.js" );
-// zipfile.addFile( "routes/index.js", "routes/index.js" );
-// zipfile.addFile( "routes/users.js", "routes/users.js" );
-// // pipe() can be called any time after the constructor
-// zipfile.outputStream.pipe( fs.createWriteStream( "package.zip" ) ).on( "close", function () {
-//     console.log( "done" );
-// } );
-// zipfile.end();

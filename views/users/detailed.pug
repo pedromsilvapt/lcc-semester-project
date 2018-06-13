@@ -1,14 +1,23 @@
 extends ../layout
+include ../packages/package-card
 
 block content
   div.w3-row-padding
-    div.w3-container.w3-col.m8.l9
+    div.w3-container.w3-col.m6.l6
       h2 #{userDetails.username}
-
+      //depois temos de mostrar uma lista com as publicações para o utilizador
+      //eu assumo que não vmos alterar em todos os locais onde chamamos esta página ara mandar essa lista para aqui, certo?
+	
       div.w3-text-black
         h4  #{userDetails.email}
         div group: #{userDetails.group}
         div approved: #{userDetails.approved}
+
+    div.w3-container.w3-col.m6.l6
+      ul.w3-ul
+        each pkg in packages
+          +package-card( pkg )
+
     div.w3-container.w3-col.m2.l4
       a.w3-button.w3-yellow.w3-small.w3-block(href='/users/' + userDetails.username + '/edit')
         | Mudar permissões
