@@ -12,3 +12,7 @@ block content
     div.w3-container.w3-col.m2.l4
       a.w3-button.w3-yellow.w3-small.w3-block(href='/users/' + userDetails.username + '/edit')
         | Mudar permissões
+
+      if user && user.group == 'admin'
+        a.w3-button.w3-red.w3-hover-deep-orange.w3-small.w3-block(href='/users/' + userDetails.username + '/remove')
+          | Apagar

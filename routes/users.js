@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var { allowGroups } = require( '../services/login.js' );
-var { User } = require( '../services/database.js' );
+var { User, Package } = require( '../services/database.js' );
 var qs = require( 'querystring' );
 var { UsersManager } = require( '../services/users' );
 var Joi = require( 'joi' );
@@ -198,7 +198,7 @@ router.get( '/:name/approve', allowGroups( [ 'admin' ] ), ( req, res, next ) => 
 } );
 
 router.get( '/:name/remove', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
-	User.findOne( { username: req.params.name }, ( err, user ) => {
+	User.findOne( { username: req.params.name, deleted: { $ne: true } }, ( err, user ) => {
 		if ( err ) {
 			return next( err );
 		}
@@ -209,18 +209,43 @@ router.get( '/:name/remove', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
 
 		const backUrl = req.query.redirect || req.header( 'Referer' ) || ( '/users/' + user.username );
 		const confirmBackUrl = req.query.redirect || req.header( 'Referer' ) || ( '/users' );
+      
+      	if ( user._id.equals( req.user._id ) ) {
+        	return next( new Error( 'User cannot delete itself.' ) );
+        }
+      
+      	Package.find( { createdBy: user._id, state: { $ne: 'deleted' } }, ( err, packages ) => {
+        	if ( err ) {
+            	return next( err );
+            }
+          	
+          	if ( packages.length > 0 ) {
+              	return next( new Error( 'Cannot erase user because of published packages: ' + packages.map( p => p.index ).join( ', ' ) ) );
+            }
+        
+			if ( req.query.confirm == 'true' ) {
+				if ( user.approved == true ) {
+					user.deleted = true;
+					user.save( ( err ) => {
+						if ( err ) {
+							return next( err );
+						}
 
-		if ( req.query.confirm == 'true' ) {	
-			user.remove( ( err ) => {
-				if ( err ) {
-					return next( err );
+						res.redirect( confirmBackUrl );
+					} );
+				} else {	
+					user.remove( ( err ) => {
+						if ( err ) {
+							return next( err );
+						}
+
+						res.redirect( confirmBackUrl );	
+					} );
 				}
-
-				res.redirect( backUrl );
-			} );
-		} else {
-			res.render( 'users/remove', { userDetails: user, redirectLink: backUrl, confirmRedirectLink: confirmBackUrl } );
-		}
+			} else {
+				res.render( 'users/remove', { userDetails: user, redirectLink: backUrl, confirmRedirectLink: confirmBackUrl } );
+			}
+		} );
 	} );
 } );
 
