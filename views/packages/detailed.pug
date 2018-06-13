@@ -50,3 +50,16 @@ block content
                         p
                             i Sem supervisores
 
+
+            if user && user.group == 'admin'
+                if package.state == 'deleted'
+                    a.w3-button.w3-orange.w3-xlarge.w3-block.w3-section(href='/packages/' + package._id + '/recover/public') 
+                        i.fa.fa-undo 
+                        |  Recover Public
+                    a.w3-button.w3-orange.w3-xlarge.w3-block.w3-section(href='/packages/' + package._id + '/recover/private') 
+                        i.fa.fa-undo 
+                        |  Recover Private
+                else
+                    a.w3-button.w3-red.w3-xlarge.w3-block.w3-section(href='/packages/' + package._id + '/remove') 
+                        i.fa.fa-minus 
+                        |  Remove

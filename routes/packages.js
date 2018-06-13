@@ -3,7 +3,7 @@ var router = express.Router();
 var { SubmissionInformationPackage } = require( '../services/sip' );
 var { Compressed } = require( '../services/compressed' );
 var { Logger } = require( '../services/logger' );
-var { Package, Settings } = require( '../services/database' );
+var { Package, Settings, User } = require( '../services/database' );
 var { allowGroups } = require( '../services/login' );
 var multer = require( 'multer' );
 var rmdir = require( 'rmdir' );
@@ -362,6 +362,82 @@ router.get( '/:id/download', ( req, res, next ) => {
             } );
         } );
     } );
+} );
+
+
+router.get('/:id/remove',allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+	Package.findOne( { _id: req.params.id, $or: [ { state: 'public' }, { state: 'private' } ] }, ( err, pck ) => {
+		if ( err ) {
+			return next( err );
+		}
+
+		if ( !pck ) {
+			return next( new Error( 'Package "' + req.params.id + '" not found.' ) );
+		}
+
+        const backUrl = req.query.redirect || req.header( 'Referer' ) || ( '/packages/' + pck.index );
+		const confirmBackUrl = req.query.redirect || req.header( 'Referer' ) || ( '/packages' );
+      
+        if ( req.query.confirm == 'true' ) {
+            if ( pck.approved == true ) {
+                pck.state = 'deleted';
+                pck.save( ( err ) => {
+                    if ( err ) {
+                        return next( err );
+                    }
+
+                    res.redirect( backUrl );
+                } );
+            } else {
+                pck.remove( ( err ) => {
+                    if ( err ) {
+                        return next( err );
+                    }
+
+                    res.redirect( confirmBackUrl );
+                } );
+            }
+        } else {
+            res.render( 'packages/remove', { package: pck, redirectLink: backUrl, confirmRedirectLink: confirmBackUrl } );
+        }
+    } );
+} );
+
+router.get('/:id/recover/:state',allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+	Package.findOne( { _id: req.params.id, state: 'deleted' }, ( err, pck ) => {
+		if ( err ) {
+			return next( err );
+		}
+
+		if ( !pck ) {
+			return next( new Error( 'Package "' + req.params.id + '" not found.' ) );
+		}
+      
+        if ( req.params.state != 'public' && req.params.state != 'private' ) {
+        	return next( new Error( 'Invalid state ' + req.params.state + ' is not public neither private.' ) );
+        }
+     
+        const backUrl = req.query.redirect || req.header( 'Referer' ) || ( '/packages/' + pck.index );
+      
+      	User.find( { _id: pck.createdBy, deleted: { $ne: true } }, ( err, user ) => {
+          	if ( err ) {
+              	return next( err );
+            }
+          
+          	if ( !user ) {
+            	return next( new Error( 'Cannot recover package because it\'s author has been deleted.' ) );
+            }
+          
+            pck.state = req.params.state;
+            pck.save( ( err ) => {
+                if ( err ) {
+                    return next( err );
+                }
+
+                res.redirect( backUrl );
+            } );
+        } );
+	} );
 } );
 
 module.exports = router;
