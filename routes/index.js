@@ -11,7 +11,7 @@ var { Package } = require( '../services/database' );
 var Joi = require( 'joi' );
 
 function loadPackages ( field, order, callback ) {
-    Package.find( { approved: true, state: 'public' } ).sort( { [ field ]: order } ).limit( 5 ).exec( callback );
+    Package.find( { approved: true, state: 'public' } ).sort( { [ field ]: order } ).limit( 10 ).exec( callback );
 }
 
 /* GET home page. */
@@ -57,6 +57,8 @@ router.get( '/login', allowLoggedOut(), ( req, res, next ) => {
 router.post( '/login', allowLoggedOut(), passport.authenticate( 'local', {
     failureRedirect: '/login?error=1'
 } ), ( req, res, next ) => {
+    console.log( req.body );
+    
     Logger.write( 'User logged in: ' + req.user.username, req.user );
     
     res.redirect( '/' );

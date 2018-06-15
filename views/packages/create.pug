@@ -1,0 +1,172 @@
+extends ../layout
+
+
+block head
+    script.
+        function authorTemplate () {
+            return `<div class="w3-flex">
+                <div class="w3-row-padding w3-flex-grow">
+                    <div class="w3-third">
+                        <input class="w3-input" type="text" placeholder="Name of the author..." name="autor" />
+                    </div>
+                    <div class="w3-third">
+                        <input class="w3-input" type="text" placeholder="Identification code of the author..." name="id" />
+                    </div>
+                    <div class="w3-third">
+                        <input class="w3-input" type="text" placeholder="Email of the author..." name="mail" />
+                    </div>
+                </div>
+                <div class="w3-flex-fixed">
+                    <a class="w3-button w3-white w3-hover-red btn-authors-remove">
+                        <i class="fa fa-minus"></i>
+                    </a>
+                </div>
+            </div>`;
+        }
+
+
+        function removeFromList ( event ) {
+          	$( event.target ).closest( '.w3-flex' ).remove();
+        }
+    
+        function addAuthor () {
+          	var author = $.parseHTML( authorTemplate() );
+
+          	$( author ).appendTo( '#form-authors-list' );
+
+            $( '.btn-authors-remove', author ).on( 'click', removeFromList );
+        }
+
+        function supervisorTemplate () {
+            return `<div class="w3-flex">
+                    <div class="w3-row-padding w3-flex-grow">
+                        <div class="w3-half">
+                            <input class="w3-input type="text" placeholder="Name of the supervisor..." name="superv"/>
+                        </div>
+                        <div class="w3-half">
+                            <input class="w3-input" type="text" placeholder="Email of the supervisor..." name="MS"/>
+                        </div>
+                    </div>
+                    <div class="w3-flex-fixed">
+                        <a class="w3-button w3-white w3-hover-red btn-supervisors-remove">
+                            <i class="fa fa-minus"></i>
+                        </a>
+                    </div>
+                </div>`;
+            }
+
+        function addSupervisor () {
+            var superv = $.parseHTML( supervisorTemplate() );
+
+            $( superv ).appendTo( '#form-supervisors-list' );
+
+            $( '.btn-supervisors-remove', superv ).on( 'click', removeFromList );
+        }
+
+        function keywordTemplate () {
+            return `<div class="w3-flex">
+                <input class="w3-input w3-flex-grow" type="text" placeholder="Keyword describing the package..." name="keyword" />
+                <div class="w3-flex-fixed">
+                    <a class="w3-button w3-white w3-hover-red btn-keywords-remove">
+                        <i class="fa fa-minus"></i>
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        function addKeyword ( e ) {
+            var keyword = $.parseHTML( keywordTemplate() );
+          
+          	$( keyword ).appendTo( '#form-keywords-list' );
+
+            $( '.btn-keywords-remove', keyword ).on( 'click', removeFromList );
+        }
+    
+        $( () => {
+            $( '#btn-authors-add' ).on( 'click', addAuthor );
+            $( '#btn-supervisors-add' ).on( 'click', addSupervisor );
+            $( '#btn-keywords-add' ).on( 'click', addKeyword );
+
+            $( '.btn-authors-remove' ).on( 'click', removeFromList );
+            $( '.btn-supervisors-remove' ).on( 'click', removeFromList );
+            $( '.btn-keywords-remove' ).on( 'click', removeFromList );
+        } );
+
+
+block content
+    div.w3-row-padding
+        form(method="post" action="/packages/create" enctype="multipart/form-data")
+            p
+                label Title
+                input.w3-input(type="text" placeholder="Title of the package..." name="title")
+            p
+                label Curricular Unit
+                input.w3-input(type="text" placeholder="Name of the curricular unit..." name="UC")
+
+            p
+                label Authors
+                div#form-authors-list
+                    div.w3-flex
+                        div.w3-row-padding.w3-flex-grow
+                            div.w3-third
+                                input.w3-input(type="text" placeholder="Name of the author..." name="autor")
+                            div.w3-third
+                                input.w3-input(type="text" placeholder="Identification code of the author..." name="id")
+                            div.w3-third
+                                input.w3-input(type="text" placeholder="Email of the author..." name="mail")
+                        div.w3-flex-fixed
+                            a.w3-button.w3-white.w3-hover-red.btn-authors-remove
+                                i.fa.fa-minus
+
+
+                div.w3-padding.w3-center
+                    a.w3-button.w3-green#btn-authors-add
+                        i.fa.fa-plus
+                        |  Add
+
+            p
+                label Supervisors
+                div#form-supervisors-list
+                    div.w3-flex
+                        div.w3-row-padding.w3-flex-grow
+                            div.w3-half
+                                input.w3-input(type="text" placeholder="Name of the supervisor..." name="superv")
+                            div.w3-half
+                                input.w3-input(type="text" placeholder="Email of the supervisor..." name="MS")
+                        div.w3-flex-fixed
+                            a.w3-button.w3-white.w3-hover-red.btn-supervisors-remove
+                                i.fa.fa-minus
+                div.w3-padding.w3-center
+                    a.w3-button.w3-green#btn-supervisors-add
+                        i.fa.fa-plus
+                        |  Add
+            p
+                label Keywords
+                div#form-keywords-list
+                    div.w3-flex
+                        input.w3-input.w3-flex-grow(type="text" placeholder="Keyword describing the package..." name="keyword")
+                        div.w3-flex-fixed
+                            a.w3-button.w3-white.w3-hover-red.btn-keywords-remove
+                                i.fa.fa-minus
+                
+                div.w3-padding.w3-center
+                    a.w3-button.w3-green#btn-keywords-add
+                        i.fa.fa-plus
+                        |  Add
+
+            p
+                label Abstract
+                textarea.w3-input(type="text" rows="8" placeholder="Type a small abstract..." name="abstract")
+
+            p
+                label Folder
+                input.w3-input(type="file" name="folder" webkitdirectory mozdirectory )
+
+            p
+                label Visibility
+                select.w3-select(name="sort" style="margin-top: 8px; margin-bottom: 16px;")
+                    option(value="public" selected=searchSort == 'public') Public
+                    option(value="private" selected=searchSort == 'private') Private
+
+            p
+                input(type="submit" value="Create Package")

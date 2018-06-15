@@ -230,6 +230,14 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
     } );
 } );
 
+router.get( '/create', allowGroups( [ 'producer', 'admin' ] ), ( req, res, next ) => {
+    res.render( 'packages/create' );
+} );
+  
+router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), ( req, res, next ) => {
+    res.redirect( '/packages' );
+} );
+
 router.get( '/:id', ( req, res, next ) => {
     const userCanSee = createRestrictionQuery( req.user );
   
