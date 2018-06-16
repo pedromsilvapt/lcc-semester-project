@@ -1,5 +1,6 @@
 var express = require( 'express' );
 var router = express.Router();
+var { Readable } = require( 'stream' );
 var { SubmissionInformationPackage } = require( '../services/sip' );
 var { Compressed } = require( '../services/compressed' );
 var { Logger } = require( '../services/logger' );
@@ -17,7 +18,8 @@ var mkdirp = require( 'mkdirp' );
 var { format } = require( 'date-fns' );
 
 var upload = multer( {
-    dest: 'uploads/'
+    dest: 'uploads/',
+    preservePath: true
 } );
 
 function cleanup( ...folders ) {
@@ -104,6 +106,108 @@ router.get( '/', ( req, res, next ) => {
     } );
 } );
 
+
+const submitPackageFolder = ( id, user, uploadFolder, storageFolder, next ) => {
+	SubmissionInformationPackage.validateMetadata( uploadFolder + '/data/package.xml', 'schema.xsd', ( err, errors ) => {
+        if ( err ) {
+            cleanup( uploadFolder );
+
+            return next( err );
+        }
+
+        if ( errors.length ) {
+            cleanup( uploadFolder );
+
+            return next( null, errors );
+        }
+
+        SubmissionInformationPackage.parseMetadata( uploadFolder + '/data/package.xml', ( err, package ) => {
+            if ( err ) {
+                cleanup( uploadFolder );
+
+                return next( err );
+            }
+            
+            var bag = BagIt( uploadFolder );
+            
+            bag.readManifest( ( err, entries ) => {
+                if ( err ) {
+                    cleanup( uploadFolder );
+
+                    return next( err );
+                }
+                
+                const checksums = {};
+                
+                for ( let entry of entries ) {
+                    if ( entry.name && entry.name.startsWith( 'data/' ) ) {
+                        checksums[ entry.name.slice( 'data/'.length ) ] = entry.checksum;
+                    }
+                }
+                    
+                SubmissionInformationPackage.validateFiles( checksums, package.files, uploadFolder + '/data', ( err, missingFiles ) => {
+                    if ( err ) {
+                        cleanup( uploadFolder );
+
+                        return next( err );
+                    }
+
+                    if ( missingFiles.length ) {
+                        cleanup( uploadFolder );
+
+                        return next( null, missingFiles );
+                    }
+
+                    SubmissionInformationPackage.moveFiles( package.files, uploadFolder + '/data', storageFolder, ( err ) => {
+                        if ( err ) {
+                            cleanup( uploadFolder, storageFolder );
+
+                            return next( err );
+                        }
+
+                        Settings.findOne( { key: 'packagesIndex' }, ( err, setting ) => {
+                            if ( err ) {
+                                cleanup( uploadFolder, storageFolder );
+
+                                return next( err );
+                            }
+
+                            if ( !setting ) {
+                                setting = new Settings( { key: 'packagesIndex', value: 0 } );
+                            }
+
+                            new Package( {
+                                // Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
+                                ...package,
+                                folder: id,
+                                approved: false,
+                                approvedBy: null,
+                                approvedAt: null,
+                                createdBy: user.id,
+                                index: setting.value++
+                            } ).save( ( err, result ) => {
+                                if ( err ) {
+                                    cleanup( uploadFolder, storageFolder );
+                                
+                                    return next( err );
+                                }
+                            
+                                Logger.write( 'Package submitted: ' + package.meta.title, user );
+
+                                cleanup( uploadFolder );
+                            
+                                setting.save();
+
+                                return next( null, null, package );
+                            } );
+                        } );
+                    } );
+                } );
+            } );
+        } );
+    } );
+}
+
 router.get( '/submit', allowGroups( [ 'producer', 'admin' ] ), ( req, res, next ) => {
     res.render( 'packages/submit' );
 } );
@@ -121,111 +225,24 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
             return next( err );
         }
 
-        SubmissionInformationPackage.validateMetadata( uploadFolder + '/data/package.xml', 'schema.xsd', ( err, errors ) => {
-            if ( err ) {
-                cleanup( req.file.path, uploadFolder );
-
-                return next( err );
+        submitPackageFolder( id, req.user, uploadFolder, storageFolder, ( err, validationErrors, package ) => {
+        	cleanup( req.file.path );
+          
+          	if ( err ) {
+            	return next( err );
             }
-
-            if ( errors.length ) {
-                cleanup( req.file.path, uploadFolder );
-
-                return res.render( 'submit-received', {
-                    errors: errors
+          	
+          	if ( validationErrors ) {
+            	return res.render( 'submit-received', {
+                    errors: validationErrors
+                } );
+            } else {
+            	res.render( 'submit-received', {
+                    name: req.body.name,
+                    file: req.file.originalname,
+                    package: package
                 } );
             }
-
-            SubmissionInformationPackage.parseMetadata( uploadFolder + '/data/package.xml', ( err, package ) => {
-                if ( err ) {
-                    cleanup( req.file.path, uploadFolder );
-
-                    return next( err );
-                }
-                
-                var bag = BagIt( uploadFolder );
-              
-              	bag.readManifest( ( err, entries ) => {
-                	if ( err ) {
-                    	cleanup( req.file.path, uploadFolder );
-
-                        return next( err );
-                    }
-                  
-                  	const checksums = {};
-                  
-                    for ( let entry of entries ) {
-                        if ( entry.name && entry.name.startsWith( 'data/' ) ) {
-                            checksums[ entry.name.slice( 'data/'.length ) ] = entry.checksum;
-                        }
-                    }
-                      
-                    SubmissionInformationPackage.validateFiles( checksums, package.files, uploadFolder + '/data', ( err, missingFiles ) => {
-                        if ( err ) {
-                            cleanup( req.file.path, uploadFolder );
-
-                            return next( err );
-                        }
-
-                        if ( missingFiles.length ) {
-                            cleanup( req.file.path, uploadFolder );
-
-                            return res.render( 'submit-received', {
-                                errors: missingFiles
-                            } );
-                        }
-
-                        SubmissionInformationPackage.moveFiles( package.files, uploadFolder + '/data', storageFolder, ( err ) => {
-                            if ( err ) {
-                                cleanup( req.file.path, uploadFolder, storageFolder );
-
-                                return next( err );
-                            }
-
-                            Settings.findOne( { key: 'packagesIndex' }, ( err, setting ) => {
-                                if ( err ) {
-                                    cleanup( req.file.path, uploadFolder, storageFolder );
-
-                                    return next( err );
-                                }
-
-                                if ( !setting ) {
-                                    setting = new Settings( { key: 'packagesIndex', value: 0 } );
-                                }
-
-                                new Package( {
-                                    // Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
-                                    ...package,
-                                    folder: id,
-                                    approved: false,
-                                    approvedBy: null,
-                                    approvedAt: null,
-                                    createdBy: req.user.id,
-                                    index: setting.value++
-                                } ).save( ( err, result ) => {
-                                    if ( err ) {
-                                        cleanup( req.file.path, uploadFolder, storageFolder );
-                                    
-                                        return next( err );
-                                    }
-                                
-                                    Logger.write( 'Package submitted: ' + package.meta.title, req.user );
-    
-                                    cleanup( req.file.path, uploadFolder );
-                                
-                                    setting.save();
-
-                                    res.render( 'submit-received', {
-                                        name: req.body.name,
-                                        file: req.file.originalname,
-                                        package: package
-                                    } );
-                                } );
-                            } );
-                        } );
-                    } );
-                } );
-            } );
         } );
     } );
 } );
@@ -234,8 +251,145 @@ router.get( '/create', allowGroups( [ 'producer', 'admin' ] ), ( req, res, next 
     res.render( 'packages/create' );
 } );
   
-router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), ( req, res, next ) => {
-    res.redirect( '/packages' );
+
+const addFileToBagit = ( files, index, bag, storageFolder, packageFolder, callback ) => {
+    if ( index >= files.length ) {
+        return callback( null );
+    }
+  
+  	const [ origin, destination ] = files[ index ];
+
+    mkdirp( path.dirname( path.join( storageFolder, 'data', destination ) ), ( err ) => {
+        if ( err ) {
+            return callback( err );
+        }
+
+        const writer = fs.createReadStream( path.join( packageFolder, origin ) )
+            .pipe( bag.createWriteStream( destination ) );
+
+          writer.on( 'error', ( err ) => callback( err ) );
+
+          writer.on( 'finish', () => addFileToBagit( files, index + 1, callback ) );
+    } );
+};
+
+const addStringToBagit = ( source, destination, bag, storageFolder, callback ) => {
+    mkdirp( path.dirname( path.join( storageFolder, 'data', destination ) ), ( err ) => {
+    	if ( err ) {
+        	return callback( err );
+        }
+      
+      	const reader = new Readable();
+      
+      	reader.push( source );
+      
+      	reader.push( null );
+      
+      	const writer = reader.pipe( bag.createWriteStream( destination ) );
+      
+      	writer.on( 'error', ( err ) => callback( err ) );
+      
+      	writer.on( 'finish', () => callback( null ) );
+    } );
+};
+
+const listify = ( body, prop_name ) => {
+    if ( !( body[ prop_name ] instanceof Array ) ) {
+        if ( !( prop_name in body ) ) {
+            body[ prop_name ] = [];
+        } else {
+            body[ prop_name ] = [ body[ prop_name ] ];
+        }
+    }
+
+    return body[ prop_name ];
+};
+
+const objectify = ( body, prefix, properties ) => {
+    for ( let prop of properties ) {
+        let prop_name = prefix + '_' + prop;
+
+        listify( body, prop_name );
+    }
+
+    const lengths = properties.map( prop => body[ prefix + '_' + prop ].length );
+
+    if ( lengths.some( len => len != lengths[ 0 ] ) ) {
+        throw new Error( `Not all properties of field ` + prefix + ` have the same length.` );
+    }
+
+    const objects = [];
+
+    for ( let i = 0; i < lengths[ 0 ]; i++ ) {
+        objects.push( {} );
+
+        for ( let prop of properties ) {
+            objects[ i ][ prop ] = body[ prefix + '_' + prop ][ i ];
+        }
+    }
+
+    return objects;
+};
+
+
+router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'folder' ), ( req, res, next ) => {
+  	const id = uid.sync( 20 );
+
+    const permanentStorageFolder = 'storage/packages/' + id;
+    const storageFolder = 'storage/bags/' + id;
+    const packageFolder = 'uploads/';
+
+    const bag = BagIt( storageFolder );
+  
+  	const files = objectify( { file_origin: reqFiles.map( file => file.filename ), file_dest: req.body.file_path }, 'file', [ 'origin', 'dest' ] )
+    	.map( file => [ file.origin, file.dest ] );
+  
+  	addFileToBagit( files, 0, bag, storageFolder, packageFolder, err => {
+    	if ( err ) {
+          	return next( err );
+        }
+
+      	const package = {};
+          
+        package.meta = {};
+      	package.meta.title = req.body.title;  
+        package.meta.publishedDate = new Date();
+      	package.meta.access = req.body.visiblity;
+      
+      	package.authors = objectify( req.body, 'author', [ 'name', 'id', 'email', 'course' ] );
+      	package.supervisors = objectify( req.body, 'supervisor', [ 'name', 'email' ] );
+        package.keywords = listify( req.body, 'keyword' );
+      	package.files = objectify( req.body, 'file', [ 'path', 'description' ] );
+      
+      	addStringToBagit( SubmissionInformationPackage.buildMetadata( package ), 'package.xml', ( err ) => {
+        	if ( err ) {
+            	return next( err );
+            }
+          
+          	bag.finalize( err => {
+                if ( err ) {
+                    return next( err );
+                }
+
+              	submitPackageFolder( id, req.user, storageFolder, permanentStorageFolder, ( err, validationErrors, package ) => {
+                    cleanup( ...req.files.map( file => file.path ) );
+
+                    if ( err ) {
+                        return next( err );
+                    }
+
+                    if ( validationErrors ) {
+                        return res.render( 'packages/create', {
+                            errors: validationErrors,
+                          	data: req.body
+                        } );
+                    } else {
+    					res.redirect( '/packages/' + package.index );
+                    }
+                } );
+        	} );
+        } );      
+    } );    
 } );
 
 router.get( '/:id', ( req, res, next ) => {
@@ -318,32 +472,13 @@ router.get( '/:id/download', ( req, res, next ) => {
         const packageFolder = path.join( 'storage/packages/', package.folder );
   
         const bag = BagIt( storageFolder );
-            
-        const addFileToBagit = ( files, index, callback ) => {
-            if ( index >= files.length ) {
-                return callback( null );
-            }
 
-            mkdirp( path.dirname( path.join( storageFolder, 'data', files[ index ] ) ), ( err ) => {
-                if ( err ) {
-                    return callback( err );
-                }
-                
-                const writer = fs.createReadStream( path.join( packageFolder, files[ index ] ) )
-                    .pipe( bag.createWriteStream( files[ index ] ) );
-  
-                  writer.on( 'error', ( err ) => callback( err ) );
-  
-                  writer.on( 'finish', () => addFileToBagit( files, index + 1, callback ) );
-            } );
-        };
-        
         readFolder( packageFolder, ( err, files ) => {
             if ( err ) {
                 return next( err );
             }
             
-            addFileToBagit( files, 0, err => {
+            addFileToBagit( files, 0, bag, storageFolder, packageFolder, err => {
                 if ( err ) {
                     return next( err );
                 }
@@ -411,7 +546,7 @@ router.get('/:id/remove',allowGroups( [ 'admin' ] ), ( req, res, next ) => {
     } );
 } );
 
-router.get('/:id/recover/:state',allowGroups( [ 'admin' ] ), ( req, res, next ) => {
+router.get('/:id/recover/:state', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
 	Package.findOne( { _id: req.params.id, state: 'deleted' }, ( err, pck ) => {
 		if ( err ) {
 			return next( err );

@@ -81,15 +81,86 @@ block head
 
             $( '.btn-keywords-remove', keyword ).on( 'click', removeFromList );
         }
-    
+
+        function fileTemplate(){
+            return `<div class="w3-flex">
+                <div class="w3-row-padding w3-flex-grow">
+                    <div class="w3-half">
+                        <input class="w3-input" type="file" placeholder="insira ficheiros nesta pasta..." name="file_data" />
+                    </div>
+                    <div class="w3-half">
+                        <input class="w3-input" type="text" placeholder="insira a descrição deste ficheiro ..." name="file_description" />
+                    </div>
+                </div>
+                <div class="w3-flex-fixed">
+                    <a class="w3-button w3-grey w3-hover-red btn-files-remove">
+                        <i class="fa fa-minus"></i>
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        function addFile(){
+            var file = $.parseHTML( fileTemplate() );
+            
+            $( file ).appendTo( '#form-folder-list' );
+
+            $( '.btn-files-remove', file ).on( 'click', removeFromList );
+        }
+
+        function folderTemplate(){
+            return `
+            <div>
+                <input class="w3-input" type="text" placeholder="insira nome da subpasta..." name="file_path" />
+                <div class="w3-flex">
+                    <div class="w3-row-padding w3-flex-grow">
+                        <div class="w3-half">
+                            <input class="w3-input" type="file" placeholder="insira ficheiros nesta pasta..." name="file_data" />
+                        </div>
+                        <div class="w3-half">
+                            <input class="w3-input" type="text" placeholder="insira a descrição deste ficheiro ..." name="file_description" />
+                        </div>
+                    </div>
+                <div class="w3-flex-fixed">
+                    <a class="w3-button w3-grey w3-hover-red btn-files-remove">
+                        <i class="fa fa-minus"></i>
+                    </a>
+                </div>
+                </div>
+                <div class="w3-padding w3-center ">
+                    <a class="w3-button w3-green #btn-files-add">
+                        <i class="fa fa-plus"></i>
+                    </a>
+                    <a class="w3-button w3-green #btn-folders-add">
+                        <i class="fa fa-plus"></i>
+                    </a>
+                    <a class="w3-button w3-green btn-folders-remove">
+                        <i class="fa fa-minus"></i>
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        function addFolder(){
+            var folder = $.parseHTML( folderTemplate() );
+
+            $( folder ).appendTo( '#form-folder-list' );
+
+            $( '.btn-folders-remove', folder ).on( 'click', removeFromList );
+        }
+
         $( () => {
             $( '#btn-authors-add' ).on( 'click', addAuthor );
             $( '#btn-supervisors-add' ).on( 'click', addSupervisor );
             $( '#btn-keywords-add' ).on( 'click', addKeyword );
+            $( '#btn-files-add' ).on( 'click', addFile );
+            $( '#btn-folders-add' ).on( 'click', addFolder );
 
             $( '.btn-authors-remove' ).on( 'click', removeFromList );
             $( '.btn-supervisors-remove' ).on( 'click', removeFromList );
             $( '.btn-keywords-remove' ).on( 'click', removeFromList );
+            $( '.btn-files-remove' ).on( 'click', removeFromList );
+            $( '.btn-folders-remove' ).on( 'click', removeFromList );
         } );
 
 
@@ -157,10 +228,27 @@ block content
             p
                 label Abstract
                 textarea.w3-input(type="text" rows="8" placeholder="Type a small abstract..." name="abstract")
-
+            
             p
-                label Folder
-                input.w3-input(type="file" name="folder" webkitdirectory mozdirectory )
+                label Pasta
+                div#form-folder-list
+                    div.w3-flex
+                        div.w3-row-padding.w3-flex-grow
+                            div.w3-half
+                                input.w3-input(type="file" placeholder="insira ficheiros nesta pasta..." name="file_data")
+                            div.w3-half
+                                input.w3-input(type="text" placeholder="insira a descrição deste ficheiro ..." name="file_description")
+                        div.w3-flex-fixed
+                            a.w3-button.w3-grey.w3-hover-red.btn-files-remove
+                                i.fa.fa-minus
+                                
+                div.w3-padding.w3-center
+                    a.w3-button.w3-green#btn-files-add
+                            i.fa.fa-plus
+                            |  Adicionar ficheiros
+                    a.w3-button.w3-green#btn-folders-add
+                            i.fa.fa-plus
+                            |  Adicionar subpastas
 
             p
                 label Visibility

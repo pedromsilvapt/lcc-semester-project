@@ -75,7 +75,7 @@ class Compressed {
         } );    
 	}
 	
-	static zip ( folder,callback ) {
+	static zip ( folder, callback ) {
 		const zipfile = new yazl.ZipFile();
 		
 		const fr = ( files, index, current, callback ) => {
