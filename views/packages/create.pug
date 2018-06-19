@@ -132,7 +132,7 @@ block head
                 return `<div class="w3-padding" data-controller="folder" data-folder-dirname="${ this.fullname }" data-folder-fullname="${ this.fullname }">
                     <i class="fa fa-folder"></i> <span data-target="folder.lblFullname"></span>
                     <div class="w3-flex">
-                        <input class="w3-flex-grow w3-input w3-margin-right" type="text" placeholder="Folder name..." name="file_description" data-target="folder.txtName" data-action="input->folder#updateBasename" />
+                        <input class="w3-flex-grow w3-input w3-margin-right" type="text" placeholder="Folder name..." data-target="folder.txtName" data-action="input->folder#updateBasename" />
                         <div class="w3-flex-fixed">
                             <a class="w3-button w3-white w3-hover-green" data-action="click->folder#addFolder">
                                 <i class="fa fa-folder"></i>
@@ -219,14 +219,17 @@ block head
         function authorTemplate () {
             return `<div class="w3-flex">
                 <div class="w3-row-padding w3-flex-grow">
-                    <div class="w3-third">
-                        <input class="w3-input" type="text" placeholder="Name of the author..." name="autor" />
+                    <div class="w3-quarter">
+                        <input class="w3-input" type="text" placeholder="Name of the author..." name="author_name" />
                     </div>
-                    <div class="w3-third">
-                        <input class="w3-input" type="text" placeholder="Identification code of the author..." name="id" />
+                    <div class="w3-quarter">
+                        <input class="w3-input" type="text" placeholder="Identification code of the author..." name="author_id" />
                     </div>
-                    <div class="w3-third">
-                        <input class="w3-input" type="text" placeholder="Email of the author..." name="mail" />
+                    <div class="w3-quarter">
+                        <input class="w3-input" type="text" placeholder="Email of the author..." name="author_email" />
+                    </div>
+                    <div class="w3-quarter">
+                        <input class="w3-input" type="text" placeholder="Curricular unit of the author..." name="author_course" />
                     </div>
                 </div>
                 <div class="w3-flex-fixed">
@@ -254,10 +257,10 @@ block head
             return `<div class="w3-flex">
                     <div class="w3-row-padding w3-flex-grow">
                         <div class="w3-half">
-                            <input class="w3-input type="text" placeholder="Name of the supervisor..." name="superv"/>
+                            <input class="w3-input type="text" placeholder="Name of the supervisor..." name="supervisor_name"/>
                         </div>
                         <div class="w3-half">
-                            <input class="w3-input" type="text" placeholder="Email of the supervisor..." name="MS"/>
+                            <input class="w3-input" type="text" placeholder="Email of the supervisor..." name="supervisor_email"/>
                         </div>
                     </div>
                     <div class="w3-flex-fixed">
@@ -303,7 +306,14 @@ block head
             $( '.btn-authors-remove' ).on( 'click', removeFromList );
             $( '.btn-supervisors-remove' ).on( 'click', removeFromList );
             $( '.btn-keywords-remove' ).on( 'click', removeFromList );
+
+            $( '#abstract' ).trumbowyg( {
+                btns: [ 'viewHTML', 'strong', 'em', '|', 'link', '|', 'removeformat', 'fullscreen' ],
+                autogrow: true,
+                minimalLinks: true
+            } );
         } );
+
 
 
 block content
@@ -321,14 +331,14 @@ block content
                 div#form-authors-list
                     div.w3-flex
                         div.w3-row-padding.w3-flex-grow
-                            div.w3-third
+                            div.w3-quarter
                                 input.w3-input(type="text" placeholder="Name of the author..." name="author_name")
-                            div.w3-third
+                            div.w3-quarter
                                 input.w3-input(type="text" placeholder="Identification code of the author..." name="author_id")
-                            div.w3-third
+                            div.w3-quarter
                                 input.w3-input(type="text" placeholder="Email of the author..." name="author_email")
                             div.w3-quarter
-                                input.w3-input(type="text" placeholder="Curricular unit of the author..." name="author_uc")
+                                input.w3-input(type="text" placeholder="Curricular unit of the author..." name="author_course")
                         div.w3-flex-fixed
                             a.w3-button.w3-white.w3-hover-red.btn-authors-remove
                                 i.fa.fa-minus
@@ -371,12 +381,11 @@ block content
 
             p
                 label Abstract
-                textarea.w3-input(type="text" rows="8" placeholder="Type a small abstract..." name="abstract")
+                div#abstract( placeholder="Type a small abstract about the package..." )
             
             div.w3-padding( data-controller="folder" data-folder-dirname="" data-folder-basename="" data-folder-fullname="" )
                 div.w3-flex
-                    span.w3-flex-grow Files (experimental)
-                    //- input.w3-flex-grow.w3-input(type="text" placeholder="Folder name..." name="file_description" data-target="folder.txtName" data-action="input->folder#updateBasename")
+                    span.w3-flex-grow Files
                     div.w3-flex-fixed
                         a.w3-button.w3-white.w3-hover-green.btn-folders-add( data-action="click->folder#addFolder" )
                             i.fa.fa-folder
