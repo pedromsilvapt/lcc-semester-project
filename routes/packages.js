@@ -16,6 +16,7 @@ var BagIt = require( 'bagit-fs' );
 var readFolder = require( '../services/readFolder' );
 var mkdirp = require( 'mkdirp' );
 var { format } = require( 'date-fns' );
+var xml2js = require( 'xml2js' );
 
 var upload = multer( {
     dest: 'uploads/',
@@ -176,13 +177,16 @@ const submitPackageFolder = ( id, user, uploadFolder, storageFolder, next ) => {
                                 setting = new Settings( { key: 'packagesIndex', value: 0 } );
                             }
 
+                            const approved = user.group == 'admin';
+                            const approvedBy = approved ? user._id : null;
+                            const approvedAt = approved ? new Date() : null;
+
                             new Package( {
-                                // Isto expande o objecto package, ou seja, coloca todos os valores de package também aqui
                                 ...package,
                                 folder: id,
-                                approved: false,
-                                approvedBy: null,
-                                approvedAt: null,
+                                approved: approved,
+                                approvedBy: approvedBy,
+                                approvedAt: approvedAt,
                                 createdBy: user.id,
                                 index: setting.value++
                             } ).save( ( err, result ) => {
@@ -198,7 +202,7 @@ const submitPackageFolder = ( id, user, uploadFolder, storageFolder, next ) => {
                             
                                 setting.save();
 
-                                return next( null, null, package );
+                                return next( null, null, result );
                             } );
                         } );
                     } );
@@ -269,7 +273,7 @@ const addFileToBagit = ( files, index, bag, storageFolder, packageFolder, callba
 
           writer.on( 'error', ( err ) => callback( err ) );
 
-          writer.on( 'finish', () => addFileToBagit( files, index + 1, callback ) );
+          writer.on( 'finish', () => addFileToBagit( files, index + 1, bag, storageFolder, packageFolder, callback ) );
     } );
 };
 
@@ -331,9 +335,59 @@ const objectify = ( body, prefix, properties ) => {
     return objects;
 };
 
+const convertTreeToAbstract = ( tree, onlyParagraphs ) => {
+    if ( onlyParagraphs == 'paragraph' && tree[ '#name' ] != 'p' ) {
+        throw new Error( `Only paragraphs are allowed here.` );
+    } else if ( !onlyParagraphs && ![ 'strong', 'em', 'a', '__text__' ].includes( tree[ '#name' ] ) ) {
+        throw new Error( `Invalid element ${ tree[ '#name' ] }` );
+    }
+
+    if ( tree[ '#name' ] == '__text__' ) {
+        return tree._;
+    }
+
+    let body = tree.$$.map( el => convertTreeToAbstract( el, false ) );
+
+    const attributes = {};
+
+    const elementsMap = { 'strong': 'b', 'em': 'i', 'a': 'xref', 'p': 'p' };
+
+    if ( tree[ '#name' ] == 'a' ) {
+        if ( !tree[ "$" ][ 'href' ] ) {
+            throw new Error( `Link element requires a href attribute.` );
+        } else {
+            attributes[ 'url' ] = tree[ "$" ][ 'href' ];
+        }
+    }
+
+    return {
+        type: elementsMap[ tree[ '#name' ] ],
+        attributes, body
+    };
+};
+
+const convertHtmlToAbstract = ( html, callback ) => {
+    var parser = new xml2js.Parser( {
+        explicitChildren: true,
+        preserveChildrenOrder: true,
+        charsAsChildren: true
+    } );
+  
+  	parser.parseString( '<root>' + html + '</root>', ( err, tree ) => {
+        if ( err ) {
+          	return callback( err );
+        }
+      
+      	try {
+            callback( null, { body: tree.root.$$.map( el => convertTreeToAbstract( el, true ) ) } )
+        } catch ( error ) {
+            callback( error );
+        }
+    } );
+};
 
 router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'file_data' ), ( req, res, next ) => {
-  	const id = uid.sync( 20 );
+    const id = uid.sync( 20 );
 
     const permanentStorageFolder = 'storage/packages/' + id;
     const storageFolder = 'storage/bags/' + id;
@@ -361,35 +415,44 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
         package.keywords = listify( req.body, 'keyword' );
       	package.files = objectify( req.body, 'file', [ 'path', 'description' ] );
       
-      	addStringToBagit( SubmissionInformationPackage.buildMetadata( package ), 'package.xml', ( err ) => {
-        	if ( err ) {
-            	return next( err );
+        convertHtmlToAbstract( req.body.abstract, ( err, abstract ) => {
+            if ( err ) {
+                return next( err );
             }
-          
-          	bag.finalize( err => {
+
+            package.abstract = abstract;
+
+            addStringToBagit( SubmissionInformationPackage.buildMetadata( package ), 'package.xml', bag, storageFolder, ( err ) => {
                 if ( err ) {
                     return next( err );
                 }
-
-              	submitPackageFolder( id, req.user, storageFolder, permanentStorageFolder, ( err, validationErrors, package ) => {
-                    cleanup( ...req.files.map( file => file.path ) );
-
+              
+                bag.finalize( err => {
                     if ( err ) {
                         return next( err );
                     }
-
-                    if ( validationErrors ) {
-                        return res.render( 'packages/create', {
-                            errors: validationErrors,
-                          	data: req.body
-                        } );
-                    } else {
-    					res.redirect( '/packages/' + package.index );
-                    }
+    
+                    submitPackageFolder( id, req.user, storageFolder, permanentStorageFolder, ( err, validationErrors, package ) => {
+                        cleanup( ...req.files.map( file => file.path ) );
+    
+                        if ( err ) {
+                            return next( err );
+                        }
+    
+                        if ( validationErrors ) {
+                            console.error( validationErrors );
+                            return res.render( 'packages/create', {
+                                errors: validationErrors,
+                                data: req.body
+                            } );
+                        } else {
+                            res.redirect( '/packages/' + package.index );
+                        }
+                    } );
                 } );
-        	} );
-        } );      
-    } );    
+            } );
+        } );
+    } );
 } );
 
 router.get( '/:id', ( req, res, next ) => {
@@ -408,9 +471,8 @@ router.get( '/:id', ( req, res, next ) => {
         package.save();
 
         const buildHtml = ( elem ) => {
-            
             if ( typeof elem === 'string' ) {
-                return elem;
+                return elem.trim();
             }
             
             const attributes = Object.keys( elem.attributes || {} )
@@ -419,7 +481,7 @@ router.get( '/:id', ( req, res, next ) => {
             
             return '<' + elem.type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + elem.type + '>';
         };
-        
+
         res.render( 'packages/detailed', {
             package: package,
             abstract: package.abstract.body.map( paragraph => buildHtml( paragraph ) ).join( '\n' ),
