@@ -332,7 +332,7 @@ const objectify = ( body, prefix, properties ) => {
 };
 
 
-router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'folder' ), ( req, res, next ) => {
+router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'file_data' ), ( req, res, next ) => {
   	const id = uid.sync( 20 );
 
     const permanentStorageFolder = 'storage/packages/' + id;
@@ -341,7 +341,7 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
 
     const bag = BagIt( storageFolder );
   
-  	const files = objectify( { file_origin: reqFiles.map( file => file.filename ), file_dest: req.body.file_path }, 'file', [ 'origin', 'dest' ] )
+  	const files = objectify( { file_origin: req.files.map( file => file.filename ), file_dest: req.body.file_path }, 'file', [ 'origin', 'dest' ] )
     	.map( file => [ file.origin, file.dest ] );
   
   	addFileToBagit( files, 0, bag, storageFolder, packageFolder, err => {

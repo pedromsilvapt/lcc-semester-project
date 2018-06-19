@@ -3,6 +3,219 @@ extends ../layout
 
 block head
     script.
+        function joinPath ( p1, p2 ) {
+            if ( !p1 && !p2 ) return '';
+            else if ( !p1 ) return p2;
+            else if ( !p2 ) return p1;
+            else if ( p1.endsWith( '/' ) && p2.startsWith( '/' ) ) return p1 + p2.slice( 1 );
+            else if ( p1.endsWith( '/' ) || p2.startsWith( '/' ) ) return p1 + p2;
+            else return p1 + '/' + p2;
+        }
+
+        application.register( "file", class extends Stimulus.Controller {
+            static get targets () {
+                return [ 'txtPath', 'txtFile', 'txtName', 'lblFullname' ];
+            }
+
+
+            connect () {
+                this.updateTextBoxes();
+            }
+
+            updateTextBoxes () {
+                if ( this.hasLblFullnameTarget ) {
+                    $( this.lblFullnameTarget ).text( this.fullname );
+                }
+
+                if ( this.basename ) {
+                    if ( this.basename != $( this.txtNameTarget ).val() ) {
+                        $( this.txtNameTarget ).val( this.basename );
+                    }
+
+                    $( this.txtPathTarget ).val( this.fullname );
+                } else {
+                    $( this.txtPathTarget ).val( '' );
+                }
+            }
+
+            get dirname () {
+                return this.data.get( 'dirname' );
+            }
+
+            set dirname ( value ) {
+                this.data.set( 'dirname', value );
+
+                this.fullname = joinPath( this.dirname, this.basename );
+            }
+
+            get basename () {
+                return this.data.get( 'basename' );
+            }
+
+            set basename ( value ) {
+                this.data.set( 'basename', value );
+
+                this.fullname = joinPath( this.dirname, this.basename );
+            }
+
+            get fullname () {
+                return this.data.get( 'fullname' );
+            }
+
+            set fullname ( value ) {
+                this.data.set( 'fullname', value );
+
+                this.updateTextBoxes();
+            }
+
+            updateFile () {
+                if ( !this.basename && this.txtFileTarget.files.length ) {
+                    this.basename = this.txtFileTarget.files[ 0 ].name;
+                }
+            }
+
+            updateBasename () {
+                this.basename = $( this.txtNameTarget ).val();
+            }
+
+            remove () {
+                $( this.element ).remove();
+            }
+        } );
+
+        application.register( "folder", class extends Stimulus.Controller {
+            static get targets () {
+                return [ "txtName", "foldersList", "filesList", 'lblFullname' ];
+            }
+
+            connect () {
+                if ( this.hasLblFullnameTarget ) {
+                    $( this.lblFullnameTarget ).text( this.fullname );
+                }
+            }
+
+            get dirname () {
+                return this.data.get( 'dirname' );
+            }
+
+            set dirname ( value ) {
+                this.data.set( 'dirname', value );
+
+                this.fullname = joinPath( this.dirname, this.basename );
+            }
+
+            get basename () {
+                return this.data.get( 'basename' );
+            }
+
+            set basename ( value ) {
+                this.data.set( 'basename', value );
+
+                this.fullname = joinPath( this.dirname, this.basename );
+            }
+
+            get fullname () {
+                return this.data.get( 'fullname' );
+            }
+
+            set fullname ( value ) {
+                this.data.set( 'fullname', value );
+
+                if ( this.hasLblFullnameTarget ) {
+                    $( this.lblFullnameTarget ).text( value );
+                }
+
+                this.updateChildrenDirname();
+            }
+
+            addFolderTemplate () {
+                return `<div class="w3-padding" data-controller="folder" data-folder-dirname="${ this.fullname }" data-folder-fullname="${ this.fullname }">
+                    <i class="fa fa-folder"></i> <span data-target="folder.lblFullname"></span>
+                    <div class="w3-flex">
+                        <input class="w3-flex-grow w3-input w3-margin-right" type="text" placeholder="Folder name..." name="file_description" data-target="folder.txtName" data-action="input->folder#updateBasename" />
+                        <div class="w3-flex-fixed">
+                            <a class="w3-button w3-white w3-hover-green" data-action="click->folder#addFolder">
+                                <i class="fa fa-folder"></i>
+                            </a>
+                            <a class="w3-button w3-white w3-hover-green" data-action="click->folder#addFile">
+                                <i class="fa fa-plus"></i>
+                            </a>
+                            <a class="w3-button w3-white w3-hover-red" data-action="click->folder#remove" data-target="folder.btnRemove">
+                                <i class="fa fa-minus"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div data-target="folder.foldersList"></div>
+                    <div data-target="folder.filesList"></div>
+                </div>
+                `;
+            }
+
+            addFileTemplate () {
+                return `<div class="w3-padding" data-controller="file" data-file-dirname="${ this.fullname }" data-file-basename="" data-file-fullname="${ this.fullname }">
+                    <i class="fa fa-file"></i> <span data-target="file.lblFullname"></span>
+                    <div class="w3-flex">
+                        <input type="hidden" name="file_path" data-target="file.txtPath" />
+                        <div class="w3-row-padding w3-margin-right w3-flex-grow">
+                            <div class="w3-third">
+                                <input class="w3-input" type="file" placeholder="Upload file" name="file_data" data-target="file.txtFile" data-action="input->file#updateFile" />
+                            </div>
+                            <div class="w3-third">
+                                <input class="w3-input" type="text" placeholder="File name..." data-target="file.txtName" data-action="input->file#updateBasename" />
+                            </div>
+                            <div class="w3-third">
+                                <input class="w3-input" type="text" placeholder="File description..." name="file_description" />
+                            </div>
+                        </div>
+                        <div class="w3-flex-fixed">
+                            <a class="w3-button w3-white w3-hover-red" data-action="click->file#remove">
+                                <i class="fa fa-minus"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
+            updateBasename () {
+                const basename = this.txtNameTarget.value;
+
+                this.basename = basename;
+            }
+
+            updateChildrenDirname () {
+                const dirname = this.fullname;
+
+                for ( let target of this.foldersListTarget.children ) {
+                    const controller = this.application.getControllerForElementAndIdentifier( target, 'folder' );
+
+                    controller.dirname = dirname;
+                }
+
+                for ( let target of this.filesListTarget.children ) {
+                    const controller = this.application.getControllerForElementAndIdentifier( target, 'file' );
+
+                    controller.dirname = dirname;
+                }
+            }
+
+            addFolder () {
+                const folder = $.parseHTML( this.addFolderTemplate() );
+
+                $( folder ).appendTo( this.foldersListTarget );
+            }
+
+            addFile () {
+                const file = $.parseHTML( this.addFileTemplate() );
+
+                $( file ).appendTo( this.filesListTarget );
+            }
+
+            remove () {
+                $( this.element ).remove();
+            }
+        } );
+
         function authorTemplate () {
             return `<div class="w3-flex">
                 <div class="w3-row-padding w3-flex-grow">
@@ -82,85 +295,14 @@ block head
             $( '.btn-keywords-remove', keyword ).on( 'click', removeFromList );
         }
 
-        function fileTemplate(){
-            return `<div class="w3-flex">
-                <div class="w3-row-padding w3-flex-grow">
-                    <div class="w3-half">
-                        <input class="w3-input" type="file" placeholder="insira ficheiros nesta pasta..." name="file_data" />
-                    </div>
-                    <div class="w3-half">
-                        <input class="w3-input" type="text" placeholder="insira a descrição deste ficheiro ..." name="file_description" />
-                    </div>
-                </div>
-                <div class="w3-flex-fixed">
-                    <a class="w3-button w3-grey w3-hover-red btn-files-remove">
-                        <i class="fa fa-minus"></i>
-                    </a>
-                </div>
-            </div>`;
-        }
-
-        function addFile(){
-            var file = $.parseHTML( fileTemplate() );
-            
-            $( file ).appendTo( '#form-folder-list' );
-
-            $( '.btn-files-remove', file ).on( 'click', removeFromList );
-        }
-
-        function folderTemplate(){
-            return `
-            <div>
-                <input class="w3-input" type="text" placeholder="insira nome da subpasta..." name="file_path" />
-                <div class="w3-flex">
-                    <div class="w3-row-padding w3-flex-grow">
-                        <div class="w3-half">
-                            <input class="w3-input" type="file" placeholder="insira ficheiros nesta pasta..." name="file_data" />
-                        </div>
-                        <div class="w3-half">
-                            <input class="w3-input" type="text" placeholder="insira a descrição deste ficheiro ..." name="file_description" />
-                        </div>
-                    </div>
-                <div class="w3-flex-fixed">
-                    <a class="w3-button w3-grey w3-hover-red btn-files-remove">
-                        <i class="fa fa-minus"></i>
-                    </a>
-                </div>
-                </div>
-                <div class="w3-padding w3-center ">
-                    <a class="w3-button w3-green #btn-files-add">
-                        <i class="fa fa-plus"></i>
-                    </a>
-                    <a class="w3-button w3-green #btn-folders-add">
-                        <i class="fa fa-plus"></i>
-                    </a>
-                    <a class="w3-button w3-green btn-folders-remove">
-                        <i class="fa fa-minus"></i>
-                    </a>
-                </div>
-            </div>`;
-        }
-
-        function addFolder(){
-            var folder = $.parseHTML( folderTemplate() );
-
-            $( folder ).appendTo( '#form-folder-list' );
-
-            $( '.btn-folders-remove', folder ).on( 'click', removeFromList );
-        }
-
         $( () => {
             $( '#btn-authors-add' ).on( 'click', addAuthor );
             $( '#btn-supervisors-add' ).on( 'click', addSupervisor );
             $( '#btn-keywords-add' ).on( 'click', addKeyword );
-            $( '#btn-files-add' ).on( 'click', addFile );
-            $( '#btn-folders-add' ).on( 'click', addFolder );
-
+            
             $( '.btn-authors-remove' ).on( 'click', removeFromList );
             $( '.btn-supervisors-remove' ).on( 'click', removeFromList );
             $( '.btn-keywords-remove' ).on( 'click', removeFromList );
-            $( '.btn-files-remove' ).on( 'click', removeFromList );
-            $( '.btn-folders-remove' ).on( 'click', removeFromList );
         } );
 
 
@@ -171,8 +313,8 @@ block content
                 label Title
                 input.w3-input(type="text" placeholder="Title of the package..." name="title")
             p
-                label Curricular Unit
-                input.w3-input(type="text" placeholder="Name of the curricular unit..." name="UC")
+                label Contexto
+                input.w3-input(type="text" placeholder="Context of the package..." name="context")
 
             p
                 label Authors
@@ -180,11 +322,13 @@ block content
                     div.w3-flex
                         div.w3-row-padding.w3-flex-grow
                             div.w3-third
-                                input.w3-input(type="text" placeholder="Name of the author..." name="autor")
+                                input.w3-input(type="text" placeholder="Name of the author..." name="author_name")
                             div.w3-third
-                                input.w3-input(type="text" placeholder="Identification code of the author..." name="id")
+                                input.w3-input(type="text" placeholder="Identification code of the author..." name="author_id")
                             div.w3-third
-                                input.w3-input(type="text" placeholder="Email of the author..." name="mail")
+                                input.w3-input(type="text" placeholder="Email of the author..." name="author_email")
+                            div.w3-quarter
+                                input.w3-input(type="text" placeholder="Curricular unit of the author..." name="author_uc")
                         div.w3-flex-fixed
                             a.w3-button.w3-white.w3-hover-red.btn-authors-remove
                                 i.fa.fa-minus
@@ -229,26 +373,17 @@ block content
                 label Abstract
                 textarea.w3-input(type="text" rows="8" placeholder="Type a small abstract..." name="abstract")
             
-            p
-                label Pasta
-                div#form-folder-list
-                    div.w3-flex
-                        div.w3-row-padding.w3-flex-grow
-                            div.w3-half
-                                input.w3-input(type="file" placeholder="insira ficheiros nesta pasta..." name="file_data")
-                            div.w3-half
-                                input.w3-input(type="text" placeholder="insira a descrição deste ficheiro ..." name="file_description")
-                        div.w3-flex-fixed
-                            a.w3-button.w3-grey.w3-hover-red.btn-files-remove
-                                i.fa.fa-minus
-                                
-                div.w3-padding.w3-center
-                    a.w3-button.w3-green#btn-files-add
+            div.w3-padding( data-controller="folder" data-folder-dirname="" data-folder-basename="" data-folder-fullname="" )
+                div.w3-flex
+                    span.w3-flex-grow Files (experimental)
+                    //- input.w3-flex-grow.w3-input(type="text" placeholder="Folder name..." name="file_description" data-target="folder.txtName" data-action="input->folder#updateBasename")
+                    div.w3-flex-fixed
+                        a.w3-button.w3-white.w3-hover-green.btn-folders-add( data-action="click->folder#addFolder" )
+                            i.fa.fa-folder
+                        a.w3-button.w3-white.w3-hover-green.btn-files-add( data-action="click->folder#addFile" )
                             i.fa.fa-plus
-                            |  Adicionar ficheiros
-                    a.w3-button.w3-green#btn-folders-add
-                            i.fa.fa-plus
-                            |  Adicionar subpastas
+                div( data-target="folder.foldersList" )
+                div( data-target="folder.filesList" )
 
             p
                 label Visibility

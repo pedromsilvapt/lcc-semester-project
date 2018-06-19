@@ -6,15 +6,13 @@ block content
         a.w3-button.w3-green.w3-xlarge(href="/packages/submit") 
             i.fa.fa-upload 
             | Submit Archive
-
-    div.w3-left.w3-margin
-        a.w3-button.w3-green.w3-xlarge(href="/packages/create")
-            i.fa.fa-upload
-            | Create Archive
     
-
     div.w3-row-padding
         div.w3-container.w3-col.m4.l3
+            div.w3-margin-bottom
+                a.w3-button.w3-green.w3-xlarge.w3-block(href="/packages/create")
+                    i.fa.fa-upload
+                    | Create Archive
             form
                 label.w3-label.w3-large Search
                 input.w3-input.w3-border(type="text" name="search" placeholder="Search..." style="margin-top: 8px; margin-bottom: 16px;" value=searchQuery)
