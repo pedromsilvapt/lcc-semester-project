@@ -326,103 +326,105 @@ block content
             each error in errors
                 div.w3-panel.w3-red
                     p #{ error }
-        form(method="post" action="/packages/create" enctype="multipart/form-data")
+
+        form(method="post" enctype=isEditing ? "application/x-www-form-urlencoded" : "multipart/form-data" )
             p
                 label Title
-                input.w3-input(type="text" placeholder="Title of the package..." name="title")
-            p
-                label Contexto
-                input.w3-input(type="text" placeholder="Context of the package..." name="context")
+                input.w3-input(type="text" placeholder="Title of the package..." name="title" value=data.title)
+            if !isEditing
+                p
+                    label Contexto
+                    input.w3-input(type="text" placeholder="Context of the package..." name="context" value=data.context)
 
+                mixin package-form-author( data )
+                    div.w3-flex
+                        div.w3-row-padding.w3-flex-grow
+                            div.w3-quarter
+                                input.w3-input(type="text" placeholder="Name of the author..." name="author_name" value=data.name)
+                            div.w3-quarter
+                                input.w3-input(type="text" placeholder="Identification code of the author..." name="author_id" value=data.id)
+                            div.w3-quarter
+                                input.w3-input(type="text" placeholder="Email of the author..." name="author_email" value=data.email)
+                            div.w3-quarter
+                                input.w3-input(type="text" placeholder="Curricular unit of the author..." name="author_course" value=data.course)
+                        div.w3-flex-fixed
+                                a.w3-button.w3-white.w3-hover-red.btn-authors-remove
+                                    i.fa.fa-minus
+                p
+                    label Authors
+                    div#form-authors-list
+                        each author in data.authors
+                            +package-form-author( author )
+                        else
+                            +package-form-author( {} )
+                    div.w3-padding.w3-center
+                        a.w3-button.w3-green#btn-authors-add
+                            i.fa.fa-plus
+                            |  Add
 
-            mixin package-form-author( data )
-                div.w3-flex
-                    div.w3-row-padding.w3-flex-grow
-                        div.w3-quarter
-                            input.w3-input(type="text" placeholder="Name of the author..." name="author_name" value=data.name)
-                        div.w3-quarter
-                            input.w3-input(type="text" placeholder="Identification code of the author..." name="author_id" value=data.id)
-                        div.w3-quarter
-                            input.w3-input(type="text" placeholder="Email of the author..." name="author_email" value=data.email)
-                        div.w3-quarter
-                            input.w3-input(type="text" placeholder="Curricular unit of the author..." name="author_course" value=data.course)
-                    div.w3-flex-fixed
-                            a.w3-button.w3-white.w3-hover-red.btn-authors-remove
-                                i.fa.fa-minus
-            p
-                label Authors
-                div#form-authors-list
-                    each author in data.authors
-                        +package-form-author( author )
-                    else
-                        +package-form-author( {} )
-                div.w3-padding.w3-center
-                    a.w3-button.w3-green#btn-authors-add
-                        i.fa.fa-plus
-                        |  Add
+                mixin package-form-supervisor( data )
+                    div.w3-flex
+                        div.w3-row-padding.w3-flex-grow
+                            div.w3-half
+                                input.w3-input(type="text" placeholder="Name of the supervisor..." name="supervisor_name" value=data.name)
+                            div.w3-half
+                                input.w3-input(type="text" placeholder="Email of the supervisor..." name="supervisor_email" value=data.email)
+                        div.w3-flex-fixed
+                                a.w3-button.w3-white.w3-hover-red.btn-supervisors-remove
+                                    i.fa.fa-minus
 
-            mixin package-form-supervisor( data )
-                div.w3-flex
-                    div.w3-row-padding.w3-flex-grow
-                        div.w3-half
-                            input.w3-input(type="text" placeholder="Name of the supervisor..." name="supervisor_name" value=data.name)
-                        div.w3-half
-                            input.w3-input(type="text" placeholder="Email of the supervisor..." name="supervisor_email" value=data.email)
-                    div.w3-flex-fixed
-                            a.w3-button.w3-white.w3-hover-red.btn-supervisors-remove
-                                i.fa.fa-minus
+                p
+                    label Supervisors
+                    div#form-supervisors-list
+                        each supervisor in data.supervisors
+                            +package-form-supervisor( supervisor )
+                        else
+                            +package-form-supervisor({})
+                    div.w3-padding.w3-center
+                        a.w3-button.w3-green#btn-authors-add
+                            i.fa.fa-plus
+                            |  Add
 
-            p
-                label Supervisors
-                div#form-supervisors-list
-                      each supervisor in data.supervisors
-                        +package-form-supervisor( supervisor )
-                      else
-                        +package-form-supervisor({})
-                div.w3-padding.w3-center
-                    a.w3-button.w3-green#btn-authors-add
-                        i.fa.fa-plus
-                        |  Add
+                mixin package-form-keyword(data)
+                    div.w3-flex
+                        input.w3-input.w3-flex-grow(type="text" placeholder="Keyword describing the package..." name="keyword" value=data)
+                        div.w3-flex-fixed
+                            a.w3-button.w3-white.w3-hover-red.btn-keywords-remove
+                            i.fa.fa-minus
 
-            mixin package-form-keyword(data)
-                div.w3-flex
-                    input.w3-input.w3-flex-grow(type="text" placeholder="Keyword describing the package..." name="keyword" value=data)
-                    div.w3-flex-fixed
-                        a.w3-button.w3-white.w3-hover-red.btn-keywords-remove
-                        i.fa.fa-minus
-
-            p
-                label Keywords
-                div#form-keywords-list
-                    each keyword in data.keywords
-                        +package-form-keyword(keyword)
-                    else
-                        +package-form-keyword("")                
-                div.w3-padding.w3-center
-                    a.w3-button.w3-green#btn-keywords-add
-                        i.fa.fa-plus
-                        |  Add
+                p
+                    label Keywords
+                    div#form-keywords-list
+                        each keyword in data.keywords
+                            +package-form-keyword(keyword)
+                        else
+                            +package-form-keyword("")                
+                    div.w3-padding.w3-center
+                        a.w3-button.w3-green#btn-keywords-add
+                            i.fa.fa-plus
+                            |  Add
 
             p
                 label Abstract
                 div#abstract( placeholder="Type a small abstract about the package..." data-value=data.abstract )
             
-            div.w3-padding( data-controller="folder" data-folder-dirname="" data-folder-basename="" data-folder-fullname="" )
-                div.w3-flex
-                    span.w3-flex-grow Files
-                    div.w3-flex-fixed
-                        a.w3-button.w3-white.w3-hover-green.btn-folders-add( data-action="click->folder#addFolder" )
-                            i.fa.fa-folder
-                        a.w3-button.w3-white.w3-hover-green.btn-files-add( data-action="click->folder#addFile" )
-                            i.fa.fa-plus
-                div( data-target="folder.foldersList" )
-                div( data-target="folder.filesList" )
+            if !isEditing
+                div.w3-padding( data-controller="folder" data-folder-dirname="" data-folder-basename="" data-folder-fullname="" )
+                    div.w3-flex
+                        span.w3-flex-grow Files
+                        div.w3-flex-fixed
+                            a.w3-button.w3-white.w3-hover-green.btn-folders-add( data-action="click->folder#addFolder" )
+                                i.fa.fa-folder
+                            a.w3-button.w3-white.w3-hover-green.btn-files-add( data-action="click->folder#addFile" )
+                                i.fa.fa-plus
+                    div( data-target="folder.foldersList" )
+                    div( data-target="folder.filesList" )
 
             p
                 label Visibility
-                select.w3-select(name="sort" style="margin-top: 8px; margin-bottom: 16px;")
-                    option(value="public" selected=searchSort == 'public') Public
-                    option(value="private" selected=searchSort == 'private') Private
+                select.w3-select(name="visibility" style="margin-top: 8px; margin-bottom: 16px;")
+                    option(value="public" selected=data.visibility == 'public') Public
+                    option(value="private" selected=data.visibility == 'private') Private
 
             p
                 input(type="submit" value="Create Package")

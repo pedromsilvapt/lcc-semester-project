@@ -56,6 +56,14 @@ function createRestrictionQuery ( user ) {
     }
 }
 
+function createEditRestrictionQuery ( user ) {
+    if ( user.group === 'producer' ) {
+        return { createdBy: user._id, approved: false };
+    }
+
+    return {};
+}
+
 const packagesList = ( req, res, next ) => {
     const packagesPerPage = 5;
   
@@ -490,6 +498,18 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
     } );
 } );
 
+const buildHtml = ( elem ) => {
+    if ( typeof elem === 'string' ) {
+        return elem.trim();
+    }
+    
+    const attributes = Object.keys( elem.attributes || {} )
+        .map( key => key + '="' + elem.attributes[ key ] + '"' )
+        .join( ' ' );
+    
+    return '<' + elem.type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + elem.type + '>';
+};
+
 const packagesDetails = ( req, res, next ) => {
     const userCanSee = createRestrictionQuery( req.user );
   
@@ -505,18 +525,6 @@ const packagesDetails = ( req, res, next ) => {
         package.visitsCount = ( package.visitsCount || 0 ) + 1;
         package.save();
 
-        const buildHtml = ( elem ) => {
-            if ( typeof elem === 'string' ) {
-                return elem.trim();
-            }
-            
-            const attributes = Object.keys( elem.attributes || {} )
-                .map( key => key + '="' + elem.attributes[ key ] + '"' )
-                .join( ' ' );
-            
-            return '<' + elem.type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + elem.type + '>';
-        };
-
         next( null, {
             package: package,
             abstract: package.abstract.body.map( paragraph => buildHtml( paragraph ) ).join( '\n' ),
@@ -526,15 +534,13 @@ const packagesDetails = ( req, res, next ) => {
     } );
 };
 
-
-
 router.get( '/:id', ( req, res, next ) => {
     packagesDetails( req, res, ( err, data ) => {
-      	if ( err ) {
-          	return next( err );
+        if ( err ) {
+            return next( err );
         }
-      
-      	res.render( 'packages/detailed', data );
+    
+        res.render( 'packages/detailed', data );
     } );
 } );
 
@@ -548,6 +554,66 @@ routerApi.get( '/:id', ( req, res, next ) => {
                 abstractHTML: data.abstract
             } } );
         }
+    } );
+} );
+
+
+router.get( '/:id/edit', allowGroups(['admin','producer']), ( req, res, next ) => {
+    const userCanSee = createRestrictionQuery( req.user );
+
+    const userCanEdit = createEditRestrictionQuery( req.user );
+  
+	Package.findOne( { $and: [ { index: req.params.id }, userCanEdit, userCanSee ] }, ( err, package ) => {
+        if ( err ) {
+            return next( err );
+        }
+      
+        if ( !package ) {
+            return next( new Error( `No package with code ${ req.params.id } was found.` ) );
+        }
+      	
+        res.render( 'packages/create', {
+            isEditing: true,
+            data: {
+            	title: package.meta.title,
+              	abstract: package.abstract.body.map( paragraph => buildHtml( paragraph ) ).join( '\n' ),
+              	visibility: package.state
+            }
+        } );
+    } );
+} );
+
+router.post( '/:id/edit', allowGroups( [ 'admin', 'producer' ] ), ( req, res, next ) => {
+  	const userCanSee = createRestrictionQuery( req.user );
+
+    const userCanEdit = createEditRestrictionQuery( req.user );
+  
+	Package.findOne( { $and: [ { index: req.params.id }, userCanEdit, userCanSee ] }, ( err, package ) => {
+      	if ( err ) {
+            return next( err );
+        }
+
+        if ( !package ) {
+            return next( new Error( `No package with code ${ req.params.id } was found.` ) );
+        }
+      
+      	convertHtmlToAbstract( req.body.abstract || '', ( err, abstract ) => {
+          	if ( err ) {
+              	return next( err );
+            }
+          
+          	package.meta.title = req.body.title;
+            package.abstract = abstract;
+            package.state = req.body.visibility;
+          
+          	package.save( ( err ) => {
+            	if ( err ) {
+                  	return next( err );
+                }
+              
+              	res.redirect( '/packages/' + package.index );
+            } )
+        } );
     } );
 } );
 
