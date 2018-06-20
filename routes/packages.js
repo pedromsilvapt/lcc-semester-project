@@ -1,5 +1,6 @@
 var express = require( 'express' );
 var router = express.Router();
+var routerApi = express.Router();
 var { Readable } = require( 'stream' );
 var { SubmissionInformationPackage } = require( '../services/sip' );
 var { Compressed } = require( '../services/compressed' );
@@ -55,7 +56,7 @@ function createRestrictionQuery ( user ) {
     }
 }
 
-router.get( '/', ( req, res, next ) => {
+const packagesList = ( req, res, next ) => {
     const packagesPerPage = 5;
   
     const currentPage = parseInt( req.query.page || 0 );
@@ -96,7 +97,8 @@ router.get( '/', ( req, res, next ) => {
             return next( err );
         }
         
-        res.render( 'packages/list', {
+      	// E aqui, em vez de fazermos render, passamos simplesmente os dados ao callback
+        next( null, {
             packages: packages,
             currentPage: currentPage,
           	hasNextPage: packages.length == packagesPerPage,
@@ -104,6 +106,26 @@ router.get( '/', ( req, res, next ) => {
             searchQuery, searchSort, searchSortDirection, searchMine, searchWaiting, searchApproved,
             format: format
         } );
+    } );
+};
+
+router.get( '/', ( req, res, next ) => {
+  	packagesList( req, res, ( err, data ) => {
+    	if ( err ) {
+          	return next( err );
+        }
+      
+      	res.render( 'packages/list', data );
+  	} );
+} );
+
+routerApi.get( '/', ( req, res, next ) => {
+    packagesList( req, res, ( err, data ) => {
+        if ( err ) {
+            return res.json( { error: err } );
+        } else {
+            return res.json( {error:null,data:data.packages} );
+        }
     } );
 } );
 
@@ -468,7 +490,7 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
     } );
 } );
 
-router.get( '/:id', ( req, res, next ) => {
+const packagesDetails = ( req, res, next ) => {
     const userCanSee = createRestrictionQuery( req.user );
   
 	Package.findOne( { $and: [ { index: req.params.id }, userCanSee ] }, ( err, package ) => {
@@ -495,17 +517,40 @@ router.get( '/:id', ( req, res, next ) => {
             return '<' + elem.type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + elem.type + '>';
         };
 
-        res.render( 'packages/detailed', {
+        next( null, {
             package: package,
             abstract: package.abstract.body.map( paragraph => buildHtml( paragraph ) ).join( '\n' ),
             format: format,
             canApprove: req.user && req.user.group == 'admin'
         } );
     } );
+};
+
+
+
+router.get( '/:id', ( req, res, next ) => {
+    packagesDetails( req, res, ( err, data ) => {
+      	if ( err ) {
+          	return next( err );
+        }
+      
+      	res.render( 'packages/detailed', data );
+    } );
 } );
 
+routerApi.get( '/:id', ( req, res, next ) => {
+    packagesDetails( req, res, ( err, data ) => {
+        if ( err ) {
+            res.json( { error: err } );
+        } else { 
+            res.json( { error: null, data: {
+                ...data.package.toObject(),
+                abstractHTML: data.abstract
+            } } );
+        }
+    } );
+} );
 
-// Agora temos de criar o código para permitir aprovar os projetos
 router.get( '/:id/approve', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
 	Package.findById( req.params.id, ( err, package ) => {
       	if ( err ) {
@@ -658,4 +703,4 @@ router.get('/:id/recover/:state', allowGroups( [ 'admin' ] ), ( req, res, next )
 	} );
 } );
 
-module.exports = router;
+module.exports = { router, routerApi };
