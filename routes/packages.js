@@ -252,7 +252,13 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
 } );
 
 router.get( '/create', allowGroups( [ 'producer', 'admin' ] ), ( req, res, next ) => {
-    res.render( 'packages/create' );
+    res.render( 'packages/create', {
+        data: {
+            authors: [],
+            keywords: [],
+            supervisors: []
+        }
+    } );
 } );
   
 
@@ -379,7 +385,7 @@ const convertHtmlToAbstract = ( html, callback ) => {
         }
       
       	try {
-            callback( null, { body: tree.root.$$.map( el => convertTreeToAbstract( el, true ) ) } )
+            callback( null, { body: ( tree.root.$$ || [] ).map( el => convertTreeToAbstract( el, true ) ) } )
         } catch ( error ) {
             callback( error );
         }
@@ -395,8 +401,10 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
 
     const bag = BagIt( storageFolder );
   
-  	const files = objectify( { file_origin: req.files.map( file => file.filename ), file_dest: req.body.file_path }, 'file', [ 'origin', 'dest' ] )
-    	.map( file => [ file.origin, file.dest ] );
+  	const files = objectify( { 
+        file_origin: req.files.map( file => file.filename ), 
+        file_dest: ( 'file_path' in req.body ) ? req.body.file_path : []
+    }, 'file', [ 'origin', 'dest' ] ).map( file => [ file.origin, file.dest ] );
   
   	addFileToBagit( files, 0, bag, storageFolder, packageFolder, err => {
     	if ( err ) {
@@ -410,12 +418,12 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
         package.meta.publishedDate = new Date();
       	package.meta.access = req.body.visiblity;
       
-      	package.authors = objectify( req.body, 'author', [ 'name', 'id', 'email', 'course' ] );
-      	package.supervisors = objectify( req.body, 'supervisor', [ 'name', 'email' ] );
-        package.keywords = listify( req.body, 'keyword' );
+      	const authors = package.authors = objectify( req.body, 'author', [ 'name', 'id', 'email', 'course' ] );
+      	const supervisors = package.supervisors = objectify( req.body, 'supervisor', [ 'name', 'email' ] );
+        const keywords = package.keywords = listify( req.body, 'keyword' );
       	package.files = objectify( req.body, 'file', [ 'path', 'description' ] );
       
-        convertHtmlToAbstract( req.body.abstract, ( err, abstract ) => {
+        convertHtmlToAbstract( req.body.abstract || '', ( err, abstract ) => {
             if ( err ) {
                 return next( err );
             }
@@ -443,7 +451,12 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
                             console.error( validationErrors );
                             return res.render( 'packages/create', {
                                 errors: validationErrors,
-                                data: req.body
+                                data: {
+                                    ...req.body,
+                                    authors: authors,
+                                    keywords: keywords,
+                                    supervisors: supervisors
+                                }
                             } );
                         } else {
                             res.redirect( '/packages/' + package.index );
