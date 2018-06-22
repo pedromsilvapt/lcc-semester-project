@@ -35,20 +35,28 @@ block content
                     p <b>Published in</b> #{format( package.createdAt, 'YYYY-MM-DD' )}
 
                 div.w3-section.w3-padding-small
-                    h4 Autores
+                    h4 Authors
                     each author in package.authors
                         p #{author.name}
                     else
                         p
-                            i Sem autores
+                            i No authors
 
                 div.w3-section.w3-padding-small
-                    h4 Supervisores
+                    h4 Supervisors
                     each supervisor in package.supervisors
                         p #{supervisor.name}
                     else
                         p
-                            i Sem supervisores
+                            i No supervisors
+
+                div.w3-section.w3-padding-small
+                    h4 Keywords
+                    each keyword in package.keywords
+                        p #{keyword}
+                    else
+                        p
+                            i No keywords
 
 
             if user && user.group == 'admin'

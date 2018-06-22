@@ -3,16 +3,19 @@ include package-card
 
 block content
     div.w3-center.w3-margin
-        a.w3-button.w3-green.w3-xlarge(href="/packages/submit") 
-            i.fa.fa-upload 
-            | Submit Archive
+        
     
     div.w3-row-padding
         div.w3-container.w3-col.m4.l3
-            div.w3-margin-bottom
-                a.w3-button.w3-green.w3-xlarge.w3-block(href="/packages/create")
-                    i.fa.fa-upload
-                    | Create Archive
+            if user && ( user.group == 'producer' || user.group == 'admin' )
+                div.w3-margin-bottom.w3-margin-top
+                    a.w3-button.w3-green.w3-hover-light-green.w3-xlarge.w3-block(href="/packages/submit") 
+                        i.fa.fa-upload 
+                        |  Submit Archive
+                div.w3-margin-bottom
+                    a.w3-button.w3-green.w3-hover-light-green.w3-xlarge.w3-block(href="/packages/create")
+                        i.fa.fa-upload
+                        |  Create Archive
             form
                 label.w3-label.w3-large Search
                 input.w3-input.w3-border(type="text" name="search" placeholder="Search..." style="margin-top: 8px; margin-bottom: 16px;" value=searchQuery)
@@ -43,7 +46,7 @@ block content
                         input.w3-check(type="checkbox" name="mine" checked=searchMine)
                         label(style="margin-left: 8px;") Only Mine
 
-                input.w3-button.w3-grey.w3-right(type="submit" value="Procurar")
+                input.w3-button.w3-grey.w3-right(type="submit" value="Search")
 
         div.w3-container.w3-col.m8.l9
             ul.w3-ul
@@ -53,11 +56,11 @@ block content
     div.w3-clear
         p
             if hasPreviousPage
-                a.w3-button.w3-left.w3-orange( href="/packages?page=" + ( currentPage - 1 ) ) Página Anterior
+                a.w3-button.w3-left.w3-orange( href="/packages?page=" + ( currentPage - 1 ) ) Previous Page
             else
-                a.w3-button.w3-left.w3-disabled Página Anterior
+                a.w3-button.w3-left.w3-disabled Previous Page
             
             if hasNextPage
-                a.w3-button.w3-right.w3-orange( href="/packages?page=" + ( currentPage + 1 ) ) Página Seguinte
+                a.w3-button.w3-right.w3-orange( href="/packages?page=" + ( currentPage + 1 ) ) Next Page
             else
-                a.w3-button.w3-right.w3-disabled Página Seguinte
+                a.w3-button.w3-right.w3-disabled Next Page

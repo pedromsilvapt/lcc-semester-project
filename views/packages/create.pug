@@ -358,7 +358,7 @@ block content
                         else
                             +package-form-author( {} )
                     div.w3-padding.w3-center
-                        a.w3-button.w3-green#btn-authors-add
+                        a.w3-button.w3-green.w3-hover-light-green#btn-authors-add
                             i.fa.fa-plus
                             |  Add
 
@@ -381,16 +381,16 @@ block content
                         else
                             +package-form-supervisor({})
                     div.w3-padding.w3-center
-                        a.w3-button.w3-green#btn-authors-add
+                        a.w3-button.w3-green.w3-hover-light-green#btn-authors-add
                             i.fa.fa-plus
                             |  Add
 
                 mixin package-form-keyword(data)
                     div.w3-flex
-                        input.w3-input.w3-flex-grow(type="text" placeholder="Keyword describing the package..." name="keyword" value=data)
+                        input.w3-input.w3-flex-grow.w3-margin-right(type="text" placeholder="Keyword describing the package..." name="keyword" value=data)
                         div.w3-flex-fixed
                             a.w3-button.w3-white.w3-hover-red.btn-keywords-remove
-                            i.fa.fa-minus
+                                i.fa.fa-minus
 
                 p
                     label Keywords
@@ -400,7 +400,7 @@ block content
                         else
                             +package-form-keyword("")                
                     div.w3-padding.w3-center
-                        a.w3-button.w3-green#btn-keywords-add
+                        a.w3-button.w3-green.w3-hover-light-green#btn-keywords-add
                             i.fa.fa-plus
                             |  Add
 
@@ -426,5 +426,5 @@ block content
                     option(value="public" selected=data.visibility == 'public') Public
                     option(value="private" selected=data.visibility == 'private') Private
 
-            p
-                input(type="submit" value="Create Package")
+            p.w3-center
+                input.w3-button.w3-xlarge.w3-green.w3-hover-light-green(type="submit" value="Create Package")

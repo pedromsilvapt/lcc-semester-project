@@ -500,7 +500,7 @@ router.post( '/create', allowGroups( [ 'producer', 'admin' ] ), upload.array( 'f
 
 const buildHtml = ( elem ) => {
     if ( typeof elem === 'string' ) {
-        return elem.trim();
+        return ' ' + elem.trim() + ' ';
     }
     
     const attributes = Object.keys( elem.attributes || {} )

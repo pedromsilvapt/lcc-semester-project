@@ -2,26 +2,36 @@ extends ../layout
 include ../packages/package-card
 
 block content
-  div.w3-row-padding
-    div.w3-container.w3-col.m6.l6
-      h2 #{userDetails.username}
-      //depois temos de mostrar uma lista com as publicações para o utilizador
-      //eu assumo que não vmos alterar em todos os locais onde chamamos esta página ara mandar essa lista para aqui, certo?
+    div.w3-row-padding
+        div.w3-container.w3-col.m4.l4
+            h2 #{userDetails.username}
 	
-      div.w3-text-black
-        h4  #{userDetails.email}
-        div group: #{userDetails.group}
-        div approved: #{userDetails.approved}
+            div.w3-text-black
+                table.w3-table.w3-bordered
+                    tr
+                        th Email
+                        td #{userDetails.email}
+                    tr
+                        th Group
+                        td #{userDetails.group}
+                    tr
+                        th Approved
+                        td #{userDetails.approved}
 
-    div.w3-container.w3-col.m6.l6
-      ul.w3-ul
-        each pkg in packages
-          +package-card( pkg )
+            div.w3-margin-top.w3-right
+                if user && user.group == 'admin'
+                    a.w3-button.w3-red.w3-hover-deep-orange.w3-small(href='/users/' + userDetails.username + '/remove')
+                        i.fa.fa-minus
+                        |  Remove User
+                        
+            div.w3-margin-top
+                a.w3-button.w3-yellow.w3-hover-amber.w3-small(href='/users/' + userDetails.username + '/edit')
+                    i.fa.fa-edit
+                    |  Edit User
+            
 
-    div.w3-container.w3-col.m2.l4
-      a.w3-button.w3-yellow.w3-small.w3-block(href='/users/' + userDetails.username + '/edit')
-        | Mudar permissões
+        div.w3-container.w3-col.m8.l8
+            ul.w3-ul
+                each pkg in packages
+                    +package-card( pkg )
 
-      if user && user.group == 'admin'
-        a.w3-button.w3-red.w3-hover-deep-orange.w3-small.w3-block(href='/users/' + userDetails.username + '/remove')
-          | Apagar
