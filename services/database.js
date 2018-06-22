@@ -12,7 +12,7 @@ var Log = mongoose.model( 'Log', new mongoose.Schema( {
     },
     user: {
         _id: mongoose.Schema.Types.ObjectId,
-        name: String
+        username: String
     }
 } ) );
 

@@ -9,7 +9,7 @@ block content
 		each log in logs
 			tr.w3-white
 				td #{log.action}
-				td #{log.user.name}
+				td #{log.user._id}
 				td #{log.date}
 		else
 			tr

@@ -607,6 +607,8 @@ router.post( '/:id/edit', allowGroups( [ 'admin', 'producer' ] ), ( req, res, ne
                   	return next( err );
                 }
               
+                Logger.write( "Package edited: " + package._id, req.user );
+
               	res.redirect( '/packages/' + package.index );
             } )
         } );
@@ -630,6 +632,8 @@ router.get( '/:id/approve', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
                 }
               
                 const backUrl = req.header( 'Referer' ) || ( '/packages/' + package._id );
+
+                Logger.write( "Package approved: " + package._id, req.user );
 
                 res.redirect( backUrl );
             } );
@@ -660,7 +664,7 @@ router.get( '/:id/download', ( req, res, next ) => {
                 return next( err );
             }
             
-            addFileToBagit( files, 0, bag, storageFolder, packageFolder, err => {
+            addFileToBagit( files.map( file => [ file, file ] ), 0, bag, storageFolder, packageFolder, err => {
                 if ( err ) {
                     return next( err );
                 }
@@ -711,6 +715,8 @@ router.get('/:id/remove',allowGroups( [ 'admin' ] ), ( req, res, next ) => {
                         return next( err );
                     }
 
+                    Logger.write( "Package removed: " + pck._id, req.user );
+
                     res.redirect( backUrl );
                 } );
             } else {
@@ -718,6 +724,8 @@ router.get('/:id/remove',allowGroups( [ 'admin' ] ), ( req, res, next ) => {
                     if ( err ) {
                         return next( err );
                     }
+
+                    Logger.write( "Package removed: " + pck._id, req.user );
 
                     res.redirect( confirmBackUrl );
                 } );
@@ -758,6 +766,8 @@ router.get('/:id/recover/:state', allowGroups( [ 'admin' ] ), ( req, res, next )
                 if ( err ) {
                     return next( err );
                 }
+
+                Logger.write( "Package " + pck._id + " recovered as " + pck.state, req.user );
 
                 res.redirect( backUrl );
             } );

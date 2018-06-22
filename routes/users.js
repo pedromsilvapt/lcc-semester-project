@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var { allowGroups } = require( '../services/login.js' );
+var { Logger } = require( '../services/logger' );
 var { User, Package } = require( '../services/database.js' );
 var qs = require( 'querystring' );
 var { UsersManager } = require( '../services/users' );
@@ -85,6 +86,8 @@ router.post( '/create', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
                 if ( err ) {
                     return next( err );
 				}
+
+				Logger.write( `Admin created user account "${ req.body.username }"`, req.user );
 				
                 res.redirect( '/users/' + user.username );
             } );
@@ -161,7 +164,9 @@ router.post( '/:name/edit', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
 				UsersManager.update( req.params.name, updated, ( err, user ) => {
 					if ( err ) {
 						return next( err );
-				  	}
+					}
+					  
+					Logger.write( `Admin updated user account "${ req.body.username }"`, req.user );
 					  
 					res.redirect( '/users/' + updated.username );
 			  	} );
@@ -186,6 +191,8 @@ router.get( '/:name/approve', allowGroups( [ 'admin' ] ), ( req, res, next ) => 
 			if ( err ) {
 				return next( err );
 			}
+
+			Logger.write( `Admin approved user account "${ user.username }"`, req.user );
 
 			// No header Referer de cada pedido vem o URL anterior da pagina.
 			// Se carregarmos numa hiperligação que nos direcionou a esta route,
@@ -231,13 +238,17 @@ router.get( '/:name/remove', allowGroups( [ 'admin' ] ), ( req, res, next ) => {
 							return next( err );
 						}
 
+						Logger.write( `Deleting user "${ user.username }"`, req.user )
+
 						res.redirect( confirmBackUrl );
 					} );
-				} else {	
+				} else {
 					user.remove( ( err ) => {
 						if ( err ) {
 							return next( err );
 						}
+
+						Logger.write( `Deleting user "${ user.username }"`, req.user )
 
 						res.redirect( confirmBackUrl );	
 					} );

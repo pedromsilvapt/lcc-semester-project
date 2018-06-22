@@ -23,8 +23,9 @@ html
 				b UM Repository
 			a.w3-bar-item.w3-button.w3-text-grey.w3-hover-grey(href="/packages")
 				b Packages
-			a.w3-bar-item.w3-button.w3-text-grey.w3-hover-grey(href="/logs")
-				b Logs
+			if user
+				a.w3-bar-item.w3-button.w3-text-grey.w3-hover-grey(href="/logs")
+					b Logs
 			if user && user.group == 'admin'
 				a.w3-bar-item.w3-button.w3-text-grey.w3-hover-grey(href="/users")
 					b Users

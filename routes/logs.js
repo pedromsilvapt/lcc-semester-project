@@ -2,13 +2,20 @@
 var express = require( 'express' );
 var router = express.Router();
 var { Log } = require( '../services/database' );
+var { allowLoggedIn } = require( '../services/login' );
 
-router.get( '/', ( req, res, next ) => {
+router.get( '/', allowLoggedIn(), ( req, res, next ) => {
     const logsPerPage = 25;
   
     const currentPage = parseInt( req.query.page || 0 );
     
-    Log.find().sort( { date: 'desc' } ).skip( currentPage * logsPerPage ).limit( logsPerPage ).exec( ( err, logs ) => {
+    const query = {};
+
+    if ( req.user.group !== 'admin' ) {
+        query[ 'user._id' ] = req.user._id;
+    }
+
+    Log.find( query ).sort( { date: 'desc' } ).skip( currentPage * logsPerPage ).limit( logsPerPage ).exec( ( err, logs ) => {
         if ( err ) {
           	return next( err );
         }
