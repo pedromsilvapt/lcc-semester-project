@@ -4,14 +4,14 @@ block content
     form.w3-center(method="post" action="/login" style="max-width: 300px; margin-right: auto; margin-left: auto")
         if error
             div.w3-panel.w3-red
-                h3 Erro
+                h3 Error
                 p #{error}
 
         p
-            label Nome 
-            input.w3-input.w3-border(type="text" placeholder="Insira o seu nome..." name="username" autofocus)
+            label Username
+            input.w3-input.w3-border(type="text" placeholder="Type in the username..." name="username" autofocus)
         p
             label Password 
-            input.w3-input.w3-border(type="password" placeholder="Insira a password..." name="password")
+            input.w3-input.w3-border(type="password" placeholder="Type in the password..." name="password")
         p
             input.w3-button.w3-dark-grey(type="submit" value="Login")

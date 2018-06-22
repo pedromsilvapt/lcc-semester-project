@@ -271,11 +271,7 @@ router.post( '/submit', allowGroups( [ 'producer', 'admin' ] ), upload.single( '
                     errors: validationErrors
                 } );
             } else {
-            	res.render( 'submit-received', {
-                    name: req.body.name,
-                    file: req.file.originalname,
-                    package: package
-                } );
+            	return res.redirect( '/packages/' + package.index );
             }
         } );
     } );

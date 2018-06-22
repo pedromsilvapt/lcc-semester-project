@@ -2,12 +2,10 @@ extends ../layout
 
 block content
     form(method="post" action="/packages/submit" enctype="multipart/form-data")
+        h2 Package Archive
+        
         p
-            label Nome   
-            input.w3-input(type="text" placeholder="Insira o seu nome..." name="name")
-        p
-            label Ficheiro
             input.w3-input(type="file" placeholder="Insira o ficheiro..." name="file")
 
-        p
-            input(type="submit" value="Submeter Ficheiro")
+        p.w3-center
+            input.w3-button.w3-xlarge.w3-green.w3-hover-light-green(type="submit" value="Submit Package")
