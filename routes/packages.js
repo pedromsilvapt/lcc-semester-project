@@ -18,6 +18,7 @@ var readFolder = require( '../services/readFolder' );
 var mkdirp = require( 'mkdirp' );
 var { format } = require( 'date-fns' );
 var xml2js = require( 'xml2js' );
+var qs = require( 'querystring' );
 
 var upload = multer( {
     dest: 'uploads/',
@@ -109,8 +110,12 @@ const packagesList = ( req, res, next ) => {
         next( null, {
             packages: packages,
             currentPage: currentPage,
-          	hasNextPage: packages.length == packagesPerPage,
-            hasPreviousPage: currentPage > 0,
+          	// hasNextPage: packages.length == packagesPerPage,
+            // hasPreviousPage: currentPage > 0,
+            hasNextPage: packages.length == packagesPerPage,
+			hasPreviousPage: currentPage > 0,
+			nextPageLink: '/packages?' + qs.stringify( { ...req.query, page: currentPage + 1 } ),
+			previousPageLink: '/packages?' + qs.stringify( { ...req.query, page: currentPage - 1 } ),
             searchQuery, searchSort, searchSortDirection, searchMine, searchWaiting, searchApproved,
             format: format
         } );

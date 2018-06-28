@@ -56,11 +56,11 @@ block content
     div.w3-clear
         p
             if hasPreviousPage
-                a.w3-button.w3-left.w3-orange( href="/packages?page=" + ( currentPage - 1 ) ) Previous Page
+                a.w3-button.w3-left.w3-orange( href=previousPageLink ) Previous Page
             else
                 a.w3-button.w3-left.w3-disabled Previous Page
             
             if hasNextPage
-                a.w3-button.w3-right.w3-orange( href="/packages?page=" + ( currentPage + 1 ) ) Next Page
+                a.w3-button.w3-right.w3-orange( href=nextPageLink ) Next Page
             else
                 a.w3-button.w3-right.w3-disabled Next Page
