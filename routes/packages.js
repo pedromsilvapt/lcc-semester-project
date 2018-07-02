@@ -410,10 +410,17 @@ const convertHtmlToAbstract = ( html, callback ) => {
         charsAsChildren: true
     } );
   
-  	parser.parseString( '<root>' + html + '</root>', ( err, tree ) => {
+    if ( !html.startsWith( '<p>' ) ) {
+        html = '<p>' + html + '</p>';
+    }
+
+    html = html.replace( /<br>/, '' );
+
+    parser.parseString( '<root>' + html + '</root>', ( err, tree ) => {
         if ( err ) {
           	return callback( err );
         }
+
       
       	try {
             callback( null, { body: ( tree.root.$$ || [] ).map( el => convertTreeToAbstract( el, true ) ) } )
