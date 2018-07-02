@@ -74,10 +74,10 @@ const packagesList = ( req, res, next ) => {
     const searchMine = req.query.mine == 'on';
     const searchWaiting = req.query.waiting == 'on';
     const searchApproved = req.query.approved == 'on';
-    const searchSort = req.query.sort || 'title';
+    const searchSort = req.query.sort || 'meta.title';
     const searchSortDirection = req.query.sortDirection == 'desc' ? 'desc' : 'asc';
 
-    const allowedSearchSort = [ 'title', 'approvedAt', 'createdAt', 'downloadsCount', 'visitsCount' ];
+    const allowedSearchSort = [ 'meta.title', 'approvedAt', 'createdAt', 'downloadsCount', 'visitsCount' ];
 
     if ( !allowedSearchSort.includes( searchSort ) ) {
         return next( new Error( `Invalid sort option.` ) );
