@@ -504,11 +504,15 @@ const buildHtml = ( elem ) => {
         return ' ' + elem.trim() + ' ';
     }
     
+    const m = { 'xref': 'a', 'url': 'href' };
+
     const attributes = Object.keys( elem.attributes || {} )
-        .map( key => key + '="' + elem.attributes[ key ] + '"' )
+        .map( key => ( m[ key ] || key ) + '="' + elem.attributes[ key ] + '"' )
         .join( ' ' );
-    
-    return '<' + elem.type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + elem.type + '>';
+
+    const type = ( m[ elem.type ] || elem.type );
+
+    return '<' + type + ' ' + attributes + '>' + elem.body.map( buildHtml ).join( '' ) + '</' + type + '>';
 };
 
 const packagesDetails = ( req, res, next ) => {

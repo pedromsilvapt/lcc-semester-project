@@ -61,8 +61,12 @@
                                         <xs:element name="i"/>
                                         <xs:element name="xref">
                                             <xs:complexType>
-                                                <xs:attribute name="url" type="xs:string"
-                                                  use="required"/>
+                                                <xs:simpleContent>
+                                                    <xs:extension base="xs:string">
+                                                        <xs:attribute name="url" type="xs:string">
+                                                        </xs:attribute>
+                                                    </xs:extension>
+                                                </xs:simpleContent>
                                             </xs:complexType>
                                         </xs:element>
                                     </xs:choice>

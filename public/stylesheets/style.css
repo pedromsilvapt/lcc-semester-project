@@ -17,3 +17,12 @@ a {
 .w3-flex-fixed {
 	flex: 0 0 auto;
 }
+
+.abstract {
+	line-height: 1.4
+
+}
+
+.abstract a {
+	color: #777777;
+}
