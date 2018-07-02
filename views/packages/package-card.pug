@@ -1,14 +1,14 @@
 mixin package-card(pkg)
     li.w3-bar.w3-card-2.w3-white.w3-padding(style="margin:20px 0")
-        a(href="/packages/" + pkg._id + "/download" title="Download")
-            span.w3-bar-item.w3-button.w3-right
+        a.w3-right(href="/packages/" + pkg._id + "/download" title="Download")
+            span.w3-bar-item.w3-button
                 i.fa.fa-download
         if !pkg.approved
-            a(href="/packages/" + pkg._id + "/approve" title="Approve")
-                span.w3-bar-item.w3-button.w3-right
+            a.w3-right(href="/packages/" + pkg._id + "/approve" title="Approve")
+                span.w3-bar-item.w3-button
                     i.fa.fa-check
 
-        span.w3-bar-item.w3-text-grey.w3-xxxlarge
+        span.w3-bar-item.w3-text-grey.w3-xxxlarge.w3-left
             if pkg.approved
                 if pkg.state == 'deleted'
                     i.fa.fa-trash 
@@ -16,7 +16,7 @@ mixin package-card(pkg)
                     i.fa.fa-globe 
             else
                 i.fa.fa-lock
-        div.w3-bar-item
+        div.w3-bar-item(style="margin-left: 70px; float: none")
             a(href="/packages/" + pkg.index)
                 span.w3-large #{pkg.meta.title}
             p

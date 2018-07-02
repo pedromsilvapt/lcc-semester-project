@@ -19,7 +19,7 @@ router.get( '/', function ( req, res, next ) {
     loadPackages( 'downloadsCount', 'desc', ( err, packagesDownloads ) => {
         if ( err ) return next( err );
 
-        loadPackages( 'viewsCount', 'desc', ( err, packagesViews ) => {
+        loadPackages( 'visitsCount', 'desc', ( err, packagesViews ) => {
             if ( err ) return next( err );
 
             loadPackages( 'createdAt', 'desc', ( err, packagesRecent ) => {
